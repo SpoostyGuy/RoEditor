@@ -1,0 +1,1000 @@
+
+<head>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <script src="https://roblox-api.arkoselabs.com/fc/api/" async defer></script>
+    <style>
+        input:focus, textarea:focus, select:focus{
+            outline: none;
+        }
+        #loading2 {
+            position: relative;
+            left: 50%;
+            top: 42px;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             z-index: 98;
+             -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #capthcaBox {
+            position: absolute;
+            top: 25%;
+            height: 302px;
+            width: 308px;
+            left: 50%;
+            background: rgba(255, 255, 255);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+             display: none;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #centeredimg {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+             -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #box {
+            position: absolute;
+            top: 25%;
+            height: 135px;
+            width: 300px;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+             display: none;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #loginbox {
+            position: absolute;
+            top: 25%;
+            height: 240px;
+            width: 400px;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+             display: none;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #jsenabledbox {
+            position: absolute;
+            top: 25%;
+            height: 100px;
+            width: 300px;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+            display: block;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #chatpchaInfo {
+            position: absolute;
+            text-align: center;
+            width: 302px;
+            top: 270px;
+            font-size: 20px;
+            color: rgb(68, 68, 68); 
+        }
+        .signin {
+            position: absolute;
+            text-align: center;
+            width: 300px;
+            top: 8px;
+            color: rgb(68, 68, 68);
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #signin4 {
+            position: absolute;
+            text-align: center;
+            width: 400px;
+            top: 8px;
+            color: rgb(68, 68, 68);
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #headclone {
+            position: absolute;
+            left: 50%;
+            top: 50px;
+            width: 105;
+            height: 105;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             z-index: 99;
+        }
+        #head {
+            position: absolute;
+            left: 50%;
+            top: 50px;
+            width: 105;
+            height: 105;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             margin-top: auto;
+             z-index: 99;
+             -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        .logintext {
+            position: absolute;
+            text-align: center;
+            width: 100%;
+            top: 138px;
+            color: rgb(68, 68, 68);
+            z-index: 1;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #username {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+            width: 400px;
+            top: 190px;
+            z-index: 1;
+        }
+        #password {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+             width: 400px;
+            top: 240px;
+            z-index: 1;
+        }
+        #click {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+            width: 140px;
+            top: 290px;
+            z-index: 1;
+        }
+        #click2 {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+            width: 140px;
+            top: 290px;
+            z-index: 1;
+        }
+        #gohome {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+            width: 180px;
+            top: 170px;
+        }
+        #errortext {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+            border-width: 0px;
+            color: rgb(180, 0, 0);
+            top: 350px;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #success {
+            position: absolute;
+            right: 20px;
+            width: 20px;
+            top: 70px;
+            height: 20px;
+            font-size: 40px;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #step2verification {
+            position: absolute;
+            width: 400px;
+            height: 240px;
+            top: 25%;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+            display: block;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #step2title {
+            position: absolute;
+            text-align: center;
+            width: 400px;
+            top: 4px;
+            color: rgb(68, 68, 68);
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #step2code {
+            position: absolute;
+            top: 120px;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             left: 50%;
+            width: 350px;
+            color: rgb(68, 68, 68);
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        #darkbackground {
+            background: rgba(0, 0, 0, 0);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: none;
+            z-index: 98;
+            animation-name: fadein;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+        #darkbackground2 {
+            background: rgba(0, 0, 0, 0);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: none;
+            z-index: 98;
+            animation-name: fadeout;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+        .signin2 {
+            position: absolute;
+            text-align: center;
+            width: 300px;
+            top: 90px;
+            font-size: 20px;
+            color: rgb(68, 68, 68);
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-user-drag: none;
+            user-drag: none;
+        }
+        @keyframes movein {
+            0% {
+                background: rgba(214, 214, 214, 0.4);
+                box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+                top: 40%;
+            }
+            40% {
+                background: rgb(214, 214, 214);
+                top: 50%;
+            }
+            100% {
+                background: rgb(214, 214, 214);
+                box-shadow: 0 8px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+                top: 50%;
+            }
+        }
+        @keyframes fadein {
+            0% {
+                background: rgba(0, 0, 0, 0);
+            }
+            100% {
+                background: rgb(0, 0, 0, 0.5);
+            }
+        }
+        @keyframes fadeout {
+            0% {
+                background: rgba(0, 0, 0, 0.5);
+            }
+            100% {
+                background: rgb(0, 0, 0, 0);
+            }
+        }
+        @keyframes moveup {
+            0% {
+                top: 180px;
+            }
+            100% {
+                top: 80px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+    <script>
+        // Yes this project does mainly use JavaScript UGH
+        // I like to keep my code not mimified
+        var doeswork = true
+        console.log(`╔═══╦════╦═══╦═══╦╗
+║╔═╗║╔╗╔╗║╔═╗║╔═╗║║
+║╚══╬╝║║╚╣║─║║╚═╝║║
+╚══╗║─║║─║║─║║╔══╩╝
+║╚═╝║─║║─║╚═╝║║──╔╗
+╚═══╝─╚╝─╚═══╩╝──╚╝`)
+        console.log('KEEP YOUR ACCOUNT SAFE')
+        console.log('DO NOT PASTE ANYTHING HERE!')
+        function PrintActivity(print) {
+            console.log('[RoEditor] ' + print)
+        }
+        function MakeHeadersReadable(headers) {
+            var arr = headers.trim().split(/[\r\n]+/);
+
+            // Create a map of header names to values
+            var headerMap = {};
+            arr.forEach(function (line) {
+                var parts = line.split(': ');
+                var header = parts.shift();
+                var value = parts.join(': ');
+                headerMap[header] = value;
+            });
+            return headerMap
+        }
+
+        var current2StepData = {}
+
+        function MakeRobloxRequest(url, method, body, include, callback, isform) {
+            var Req = new XMLHttpRequest();
+            Req.open(method,url,true)
+            Req.withCredentials = include;
+            Req.onreadystatechange = function() {
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        callback(true,Req)
+                    } else {
+                        PrintActivity('Something went wrong')
+                        callback(false,Req)
+                    }
+                }
+            }
+            if (method != 'GET') {
+                if (isform == true) {
+                    Req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                } else {
+                    Req.setRequestHeader('Content-type', 'application/json');
+                }
+                Req.send(body)
+            } else {
+                Req.send()
+            }
+        }
+    var isdisabled = false
+    var currentToken = undefined
+    var response = ''
+    var totalAmount = undefined
+    var response2 = ''
+    var next = 1
+    async function ShowChaptchaPrompt(bda) {
+        var dis = document.getElementById('redX')
+        if (dis != null) {
+            dis = dis.style.display
+        }
+        var parent = document.getElementById('capthcaBox')
+        while (parent.firstChild) {
+            parent.removeChild(parent.firstChild);
+        }
+        next = 1
+        response = ''
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button m="4" onclick='Click(4)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 102px;
+            top: 194px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button m="1" onclick='Click(1)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 102px;
+            top: 84px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button m="0" onclick='Click(0)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 0px;
+            top: 84px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button m="3" onclick='Click(3)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 0px;
+            top: 194px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button m="5" onclick='Click(5)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 205px;
+            top: 194px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button m="2" onclick='Click(2)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 205px;
+            top: 84px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<div style="
+            position: absolute;
+            z-index: -2;
+            width: 100%;
+            height: 100%;
+            background-color: rgb(0,0,0);
+            transition: all 0.5s linear;
+            opacity: 0;
+            outline: none;
+        " id="back"></div>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<h3 style="
+            position: absolute;
+            z-index: -1;
+            transform: translateX(-50%) translateY(-50%);
+            top: 50%;
+            left: 50%;
+            text-align: center;
+            color: white;
+            transition: all 0.5s linear;
+            width: 200px;
+            height: 40px;
+            opacity: 0;
+        " id="h3YE"></h3>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<div style="
+            position: absolute;
+            z-index: -1;
+            transform: translateX(-50%) translateY(-50%);
+            top: calc(50% + 28px);
+            background-color: grey;
+            left: 50%;
+            transition: all 0.5s linear;
+            width: 200px;
+            height: 4px;
+            opacity: 0;
+        " id="barback"></div>`
+        document.getElementById('barback').innerHTML = document.getElementById('barback').innerHTML + `<div style="
+            position: absolute;
+            z-index: 803;
+            background-color: lightgreen;
+            transition: all 0.5s linear;
+            width: 0px;
+            height: 4px;
+            opacity: 1;
+        " id="barYE"></div>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + ` <p style="
+     position: absolute;
+     border-width: 0px;
+     top: 25px;
+     -moz-user-select: none;
+     -webkit-user-select: none;
+     -ms-user-select: none;
+     user-select: none;
+     -webkit-user-drag: none;
+     user-drag: none;
+     font-size: 25px;
+     text-align: center;
+     width: 100%;
+     " id="explainText">Loading...</p>`
+
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<span id="redX" style="z-index: 1000; color: red; display: none; width:100px; height:100px; font-size:100px; transform: translateX(-50%) translateY(-50%); position: absolute; top: 50%; left: 50%;" class="material-symbols-outlined">
+        highlight_off
+        </span>`
+        document.getElementById('redX').style.display = dis
+        if (dis == 'block') {
+            document.getElementById('back').style.zIndex = '800'
+            document.getElementById('back').style.opacity = '0.5'
+            document.getElementById('redX').style.transition = 'all 0.5s linear'
+            document.getElementById('redX').style.opacity = '1'
+            await new Promise(r => setTimeout(r, 400));
+            document.getElementById('back').style.opacity = '0'
+            document.getElementById('redX').style.opacity = '0'
+        }
+        var fullToken = undefined
+        MakeRobloxRequest('/makeChaptchaCorsRequest','POST',JSON.stringify({'before':bda}),true,async function(is,res) {
+            var dataToken = JSON.parse(res.responseText)
+            console.log(dataToken.show)
+            fullToken = dataToken['token'].token
+            document.getElementById('explainText').innerHTML = dataToken.show
+            var token = dataToken['token'].token.split('|')[0]
+            currentToken = token
+            totalAmount = dataToken.amount
+            var url = token + '&r=us-east-1&metabgclr=transparent&guitextcolor=%23474747&maintxtclr=%23b8b8b8&metaiconclr=%23757575&meta=3&lang=en&pk=476068BF-9607-4799-B53D-966BE98E2B81&at=40&rid=14&ag=101&cdn_url=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc&lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com&surl=https%3A%2F%2Froblox-api.arkoselabs.com&smurl=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager'
+            var iframe = document.createElement('img')
+            iframe.frameBorder = ""
+            iframe.scrolling = "no"
+            iframe.ariaLabel = " "
+            iframe.style.top = '84px'
+            iframe.style.width = '308px'
+            iframe.style.position = 'absolute'
+            iframe.style.height = '220px'
+            iframe.id = "imgYE"
+            iframe.src = '/img.png?token=' + token
+            console.log('/img.gif?token=' + token)
+            document.getElementById('redX').style.display = 'none'
+            document.getElementById('capthcaBox').appendChild(iframe)
+            document.getElementById('capthcaBox').style.display = 'block'
+        })
+        while (true) {
+            if (response != '') {
+                break
+            }
+            await new Promise(r => setTimeout(r, 100));
+        }
+        if (response != 'yeet') {
+            response2 = fullToken
+        } else {
+            ShowChaptchaPrompt(bda)
+        }
+    }
+    var isClick = false
+    async function Click(e) {
+        var token = currentToken
+        if (e != undefined && isClick == false) {
+            isClick = true
+            next = next +1
+            if (next < (totalAmount+1)) {
+                document.getElementById('h3YE').innerHTML = next + '/' + totalAmount
+                document.getElementById('h3YE').style.zIndex = '801'
+                document.getElementById('back').style.zIndex = '800'
+                document.getElementById('barback').style.zIndex = '802'
+                document.getElementById('h3YE').style.transition = 'all 0.5s linear'
+                document.getElementById('back').style.transition = 'all 0.5s linear'
+                document.getElementById('barback').style.transition = 'all 0.5s linear'
+                document.getElementById('h3YE').style.opacity = '1'
+                document.getElementById('barback').style.opacity = '1'
+                document.getElementById('back').style.opacity = '0.5'
+            } else {
+                document.getElementById('h3YE').innerHTML = 'Finished'
+                document.getElementById('h3YE').style.zIndex = '801'
+                document.getElementById('back').style.zIndex = '800'
+                document.getElementById('barback').style.zIndex = '802'
+                document.getElementById('h3YE').style.transition = 'all 0.5s linear'
+                document.getElementById('back').style.transition = 'all 0.5s linear'
+                document.getElementById('barback').style.transition = 'all 0.5s linear'
+                document.getElementById('h3YE').style.opacity = '1'
+                document.getElementById('barback').style.opacity = '1'
+                document.getElementById('back').style.opacity = '0.5'
+            }
+            await new Promise(r => setTimeout(r, 500));
+            document.getElementById('barYE').style.width = (200*((next-1)/totalAmount)) + 'px'
+            var response4 = undefined
+            await fetch('/an?token=' + token + '&an=' + e)
+                .then(res => res.json())
+                .then(res => {
+                    response4 = res
+                })
+            if (response4.response == 'answered') {
+                await new Promise(r => setTimeout(r, 500));
+                if (response4.solved == false) {
+                    document.getElementById('h3YE').style.display = 'none'
+                    document.getElementById('barback').style.display = 'none'
+                    document.getElementById('redX').style.display = 'block'
+                    response4.solved = 'yeet'
+                } else {
+                    document.getElementById('capthcaBox').style.display = 'none'
+                }
+                response = response4.solved
+            } else {
+                document.getElementById('imgYE').src = '/img.png?token=' + token + '&time=' + (+new Date())
+            }
+            await new Promise(r => setTimeout(r, 600));
+            document.getElementById('h3YE').style.transition = 'all 0.5s linear'
+            document.getElementById('back').style.transition = 'all 0.5s linear'
+            document.getElementById('barback').style.transition = 'all 0.5s linear'
+            document.getElementById('h3YE').style.opacity = '0'
+            document.getElementById('barback').style.opacity = '0'
+            document.getElementById('back').style.opacity = '0'
+            await new Promise(r => setTimeout(r, 500));
+            document.getElementById('h3YE').style.zIndex = '-1'
+            document.getElementById('back').style.zIndex = '-2'
+            document.getElementById('barback').style.zIndex = '-4'
+            isClick = false
+        }
+    }
+   function Load() {
+       if (isdisabled == false) {
+           isdisabled = true
+           document.getElementById('username').disabled = true
+            document.getElementById('password').disabled = true
+            document.getElementById('click').disabled = true
+            PrintActivity('Making first request...')
+            MakeRobloxRequest('/loginintoroblox','POST',JSON.stringify({
+                    ctype:	"Username",
+                    cvalue:	document.getElementById('username').value,
+                    password:	document.getElementById('password').value
+                }),true,async function(is,res) {
+                    if (res.status == 403) {
+                        var response = JSON.parse(res.responseText)
+                        if (response.errors[0].message == 'You must pass the robot test before logging in.') {
+                            PrintActivity('Robot test required')
+                            var chaptchaId = JSON.parse(response.errors[0].fieldData).unifiedCaptchaId
+                            document.getElementById('darkbackground').style.display = 'block'
+                            response2 = ''
+                            ShowChaptchaPrompt(JSON.parse(response.errors[0].fieldData).dxBlob)
+                            while (true) {
+                                if (response2 != '') {
+                                    break
+                                }
+                                await new Promise(r => setTimeout(r, 10));
+                            }
+                            var chaptchaToken = response2
+                            chaptchaToken = chaptchaToken.split('|')[0] + '|r=us-east-1|metabgclr=transparent|guitextcolor=%23474747|maintxtclr=%23b8b8b8|metaiconclr=%23757575|meta=3|lang=en|pk=476068BF-9607-4799-B53D-966BE98E2B81|at=40|sup=1|rid=76|ag=101|cdn_url=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com|surl=https%3A%2F%2Froblox-api.arkoselabs.com|smurl=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager'
+                            await new Promise(r => setTimeout(r, 200));
+                            document.getElementById('box').style.display = 'block'
+                            PrintActivity('Making second request...')
+                            await new Promise(r => setTimeout(r, 2000));
+                            MakeRobloxRequest('/loginintoroblox','POST',JSON.stringify({
+                                captchaId:	chaptchaId,
+                                captchaToken:	chaptchaToken,
+                                ctype:	"Username",
+                                cvalue:	document.getElementById('username').value,
+                                password:	document.getElementById('password').value,
+                            }),true,async function(is,res) {
+                                var headers = MakeHeadersReadable(res.getAllResponseHeaders())
+                                var user = JSON.parse(res.responseText)
+                                if (user.twoStepVerificationData == undefined) {
+                                    if (headers["main-cookie"] != undefined) {
+                                        console.log('logged in')
+                                        document.title = "Logged in as " + user.user.name
+                                        document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
+                                        MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: user.user.id}), false, async function(is,res4) {
+                                            head = JSON.parse(res4.responseText)
+                                            head.data.forEach(async function(item) {
+                                                if (item.state === 'Completed') {
+                                                    document.getElementById('head').src = item.imageUrl
+                                                    document.getElementById('loginbox').style.display = 'block'
+                                                } else {
+                                                    await new Promise(r => setTimeout(r, 400));
+                                                    MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: user.user.id}), false, async function(is,res2) {
+                                                        head2 = JSON.parse(res2.responseText)
+                                                        head2.data.forEach(async function(item) {
+                                                            if (item.state === 'Completed') {
+                                                                document.getElementById('head').src = item.imageUrl
+                                                                document.getElementById('loginbox').style.display = 'block'
+                                                            }
+                                                        })
+                                                    })
+                                                }
+                                            })
+                                        })
+                                        document.getElementById('signin4').innerHTML = 'Logged in as: ' + user.user.name
+                                    } else {
+                                        isdisabled = false
+                                        var res2 = JSON.parse(res.responseText)
+                                        document.getElementById('errortext').innerHTML = res2.errors[0].message
+                                        document.getElementById('darkbackground').style.display = 'none'
+                                        document.getElementById('darkbackground2').style.display = 'block'
+                                        await new Promise(r => setTimeout(r, 500));
+                                        document.getElementById('darkbackground2').style.display = 'none'
+                                        document.getElementById('username').disabled = false
+                                        document.getElementById('password').disabled = false
+                                        document.getElementById('click').disabled = false
+                                    }
+                                } else {
+                                    isdisabled = false
+                                    console.log(user)
+                                    document.getElementsByClassName('2fa')[0].innerHTML = "Please enter your 2FA code fom your " + user.twoStepVerificationData.mediaType.toLowerCase()
+                                    document.getElementById('step2verification').style.display = 'block'
+                                    current2StepData = user
+                                    /*
+                                    document.getElementById('errortext').innerHTML = "2 Step Verification isn't supported yet. Please try again later."
+                                    document.getElementById('darkbackground').style.display = 'none'
+                                    document.getElementById('darkbackground2').style.display = 'block'
+                                    await new Promise(r => setTimeout(r, 500));
+                                    document.getElementById('darkbackground2').style.display = 'none'
+                                    document.getElementById('username').disabled = false
+                                    document.getElementById('password').disabled = false
+                                    document.getElementById('click').disabled = false
+                                    */
+                                }
+                            })
+                            document.getElementById('box').style.display = 'none'
+                        } else {
+                            isdisabled = false
+                            document.getElementById('errortext').innerHTML = response.errors[0].message
+                            document.getElementById('darkbackground').style.display = 'none'
+                            document.getElementById('darkbackground2').style.display = 'block'
+                            await new Promise(r => setTimeout(r, 500));
+                            document.getElementById('darkbackground2').style.display = 'none'
+                            document.getElementById('username').disabled = false
+                            document.getElementById('password').disabled = false
+                            document.getElementById('click').disabled = false
+                        }
+                    } else {
+                        if (res.status == 200) {
+                            var headers = MakeHeadersReadable(res.getAllResponseHeaders())
+                            var user = JSON.parse(res.responseText)
+                            if (user.twoStepVerificationData == undefined) {
+                                if (headers["main-cookie"] != undefined) {
+                                    document.getElementById('darkbackground').style.display = 'block'
+                                    console.log('logged in')
+                                    document.title = "Logged in as " + user.user.name
+                                    document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
+                                    MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: user.user.id}), false, async function(is,res4) {
+                                        head = JSON.parse(res4.responseText)
+                                        head.data.forEach(async function(item) {
+                                            if (item.state === 'Completed') {
+                                                document.getElementById('head').src = item.imageUrl
+                                                document.getElementById('loginbox').style.display = 'block'
+                                            } else {
+                                                await new Promise(r => setTimeout(r, 400));
+                                                MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: user.user.id}), false, async function(is,res2) {
+                                                    head2 = JSON.parse(res2.responseText)
+                                                    head2.data.forEach(async function(item) {
+                                                        if (item.state === 'Completed') {
+                                                            document.getElementById('head').src = item.imageUrl
+                                                            document.getElementById('loginbox').style.display = 'block'
+                                                        }
+                                                    })
+                                                })
+                                            }
+                                        })
+                                    })
+                                    document.getElementById('signin4').innerHTML = 'Logged in as: ' + user.user.name
+                                } else {
+                                    isdisabled = false
+                                    var res2 = JSON.parse(res.responseText)
+                                    document.getElementById('errortext').innerHTML = res2.errors[0].message
+                                    document.getElementById('darkbackground').style.display = 'none'
+                                    document.getElementById('darkbackground2').style.display = 'block'
+                                    await new Promise(r => setTimeout(r, 500));
+                                    document.getElementById('darkbackground2').style.display = 'none'
+                                    document.getElementById('username').disabled = false
+                                    document.getElementById('password').disabled = false
+                                    document.getElementById('click').disabled = false
+                                }
+                            } else {
+                                isdisabled = false
+                                console.log(user)
+                                document.getElementById('darkbackground').style.display = 'block'
+                                document.getElementsByClassName('2fa')[0].innerHTML = "Please enter your 2FA code fom your " + user.twoStepVerificationData.mediaType.toLowerCase()
+                                document.getElementById('step2verification').style.display = 'block'
+                                current2StepData = user
+                                /*
+                                document.getElementById('errortext').innerHTML = "2 Step Verification isn't supported yet. Please try again later."
+                                document.getElementById('darkbackground').style.display = 'none'
+                                document.getElementById('darkbackground2').style.display = 'block'
+                                await new Promise(r => setTimeout(r, 500));
+                                document.getElementById('darkbackground2').style.display = 'none'
+                                document.getElementById('username').disabled = false
+                                document.getElementById('password').disabled = false
+                                document.getElementById('click').disabled = false
+                                */
+                            }
+                        }
+                    }
+                })
+        }
+        console.log(`╔═══╦════╦═══╦═══╦╗
+║╔═╗║╔╗╔╗║╔═╗║╔═╗║║
+║╚══╬╝║║╚╣║─║║╚═╝║║
+╚══╗║─║║─║║─║║╔══╩╝
+║╚═╝║─║║─║╚═╝║║──╔╗
+╚═══╝─╚╝─╚═══╩╝──╚╝`)
+        console.log('KEEP YOUR ACCOUNT SAFE')
+        console.log('DO NOT PASTE ANYTHING HERE!')
+   }
+   function Login2Step() {
+        document.getElementById('click2').disabled = true
+        document.getElementById('step2code').disabled = true
+        MakeRobloxRequest('/2step', 'POST', JSON.stringify({challenge: current2StepData.twoStepVerificationData.ticket, code: document.getElementById('step2code').value, type: current2StepData.twoStepVerificationData.mediaType, id: current2StepData.user.id }), false, async function(is,res4) {
+            var dataYes = JSON.parse(res4.responseText)
+            document.getElementById('click2').disabled = false
+            document.getElementById('step2code').disabled = false
+            if (res4.status != 200) {
+                document.getElementsByClassName('2fa')[0].style.color = "red"
+                document.getElementsByClassName('2fa')[0].innerHTML = dataYes.errors[0].message
+            } else {
+                var res = res4
+                document.getElementById('step2verification').style.display = 'none'
+                var headers = MakeHeadersReadable(res.getAllResponseHeaders())
+                var user = current2StepData
+                if (headers["main-cookie"] != undefined) {
+                    document.getElementById('darkbackground').style.display = 'block'
+                    console.log('logged in')
+                    document.title = "Logged in as " + user.user.name
+                    document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
+                    MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: user.user.id}), false, async function(is,res4) {
+                        head = JSON.parse(res4.responseText)
+                        head.data.forEach(async function(item) {
+                            if (item.state === 'Completed') {
+                                document.getElementById('head').src = item.imageUrl
+                                document.getElementById('loginbox').style.display = 'block'
+                            } else {
+                                await new Promise(r => setTimeout(r, 400));
+                                MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: user.user.id}), false, async function(is,res2) {
+                                    head2 = JSON.parse(res2.responseText)
+                                    head2.data.forEach(async function(item) {
+                                        if (item.state === 'Completed') {
+                                            document.getElementById('head').src = item.imageUrl
+                                            document.getElementById('loginbox').style.display = 'block'
+                                        }
+                                    })
+                                })
+                            }
+                        })
+                    })
+                    document.getElementById('signin4').innerHTML = 'Logged in as: ' + user.user.name
+                } else {
+                    isdisabled = false
+                    var res2 = JSON.parse(res.responseText)
+                    document.getElementById('errortext').innerHTML = res2.errors[0].message
+                    document.getElementById('darkbackground').style.display = 'none'
+                    document.getElementById('darkbackground2').style.display = 'block'
+                    await new Promise(r => setTimeout(r, 500));
+                    document.getElementById('darkbackground2').style.display = 'none'
+                    document.getElementById('username').disabled = false
+                    document.getElementById('password').disabled = false
+                    document.getElementById('click').disabled = false
+                }
+            }
+        })
+   }
+   function GoHome() {
+       window.location.href = '/'
+   }
+    </script>
+</head>
+<body>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <noscript>
+        <div id='jsenabledbox'>
+            <h4 class='signin'>Please enable JavaScript in your browser</h4>
+        </div>
+     </noscript>
+     <img src='/titlebackground.png' id='centeredimg'>
+     <title>Login to RoEditor</title>
+     <input type="text" id='username' placeholder="Username" class="form-control" autocomplete="off" autocomplete="off"></input>
+     <input type="password" id='password' class="form-control" placeholder="Password" autocomplete="off" spellcheck="false"></input>
+     <button id='click' class="btn btn-secondary btn-lg btn-block" onclick="Load()">Authenticate</button>
+     <p id='errortext'></p>
+     <div id='darkbackground'></div>
+     <div id='darkbackground2'></div>
+    <div id='box'>
+        <h3 class='signin'>Authenticating...</h3>
+        <img id="loading2" src="https://images.rbxcdn.com/4bed93c91f909002b1f17f05c0ce13d1.gif"></img>
+        <p class='signin2'>DO NOT RELOAD</p>
+    </div>
+    <div id='capthcaBox'>
+        <div id="CAPTCHA"></div>
+        <h4 id='chatpchaInfo'>Roblox's login api does not work without a solved captcha token</h4>
+    </div>
+    <div style="display: none;" id='step2verification'>
+        <h3 id='step2title'>2 Step Verification</h3>
+        <h5 id='step2title' class="2fa" style="top: 40px">Please enter your 2FA code fom your Email</h5>
+        <button id='click2' onclick="Login2Step()" style="top: 175px" class="btn btn-secondary btn-lg btn-block">Login</button>
+        <input type="text" id='step2code' placeholder="Verification code" class="form-control" autocomplete="off" autocomplete="off"></input>
+    </div>
+    <div id='loginbox'>
+        <h3 id='signin4'>Logged in as: null</h3>
+        <img id='head'>
+        <div id='headclone'>
+            <h4 id='success'><span style="font-size: 60px;" class="material-symbols-outlined">
+                done
+                </span>
+                </h4>
+        </div>
+        <button id='gohome' class="btn btn-secondary btn-lg btn-block" onclick="GoHome()">Go to homepage</button>
+    </div>
+    <h3 class='logintext'>Log in</h3>
+</body>
+
+

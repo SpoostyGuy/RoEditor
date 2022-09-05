@@ -1,0 +1,382 @@
+
+<head>
+    <script>
+        var Module = {
+            onRuntimeInitialized: function() {
+                console.log("ready");
+            },
+        };
+    </script>
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/editor/editor.main.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap');
+        #allBeforeLoad {
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+        #back {
+            z-index: 300;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            height: 100%;
+            background-color: rgba(0,0,0,.5);
+        }
+        .sizeImage {
+            width: 336px;
+            height: 336px;
+        }
+        .sizeFrame {
+            position: relative;
+            top: calc(-100% + 3px);
+            width: 24px;
+            height: 24px;
+            overflow: hidden;
+        }
+        #explorerdiv {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            z-index: 40;
+            border-radius: 10px;
+            box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);
+            height: 40%;
+            width: 40%;
+            overflow-y: auto;
+        }
+        #properties {
+            position: absolute;
+            right: 20px;
+            top: calc(40% + 140px);
+            z-index: 40;
+            border-radius: 10px;
+            height: 40%;
+            box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);
+            width: 40%;
+            font-size: 20px;
+            background: rgba(0,0,0,0);
+            overflow-y: auto;
+        }
+        #createMenu {
+            position: absolute;
+            transform: translateX(-50%) translateY(-50%);
+            left: 50%;
+            top: calc(50% + 50px);
+            z-index: 800;
+            border-radius: 10px;
+            height: 340px;
+            box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);
+            width: 520px;
+            font-size: 20px;
+            background: rgba(0,0,0,0);
+            overflow-y: auto;
+        }
+        #createMenutitle {
+            position: absolute;
+            transform: translateX(-50%) translateY(-50%);
+            left: 50%;
+            top: calc(50% - 150px);
+            box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);
+            height: 40px;
+            width: 520px;
+            font-size: 28px;
+            z-index: 800;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #explorertitle {
+            width: 40%;
+            position: absolute;
+            top: 30px;
+            right: 20px;
+            box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);
+            height: 40px;
+            font-size: 28px;
+            border-radius: 10px;
+            text-align: center;
+            background-color: rgb(255,255,255)
+        }
+        #propertiestitle {
+            width: 40%;
+            position: absolute;
+            top: calc(40% + 90px);
+            right: 20px;
+            height: 40px;
+            font-size: 28px;
+            text-align: center;
+            box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);
+            border-radius: 10px;
+            background-color: rgb(255,255,255)
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px grey; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgb(0,0,0); 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgb(140,140,140);
+            border-radius: 10px;
+        }
+        .mdc-linear-progress {
+            position: absolute;
+            width: 100%;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            outline: 1px solid transparent;
+            overflow: hidden;
+            transition: opacity 250ms 0ms cubic-bezier(0.4, 0, 0.6, 1);
+            top: calc(100% - 4px);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        @keyframes ye {
+            0% {
+                top: 100%;
+                border-width: 0px;
+            }
+            20% {
+                border-width: 40px;
+            }
+            100% {
+                top: calc(100% - 240px);
+                border-width: 4px;
+            }
+        }
+        @keyframes ye2 {
+            0% {
+                top: calc(100% - 285px);
+                border-width: 4px;
+            }
+            100% {
+                top: calc(100% + 50px);
+                border-width: 50px;
+            }
+        }
+        #runCommand {
+            position: fixed;
+            top: calc(100% - 45px);
+            padding: 20px;
+            height: 45px;
+            font-size: 30px;
+            font-family: 'Source Sans Pro', sans-serif;
+            border: none;
+            width: 100%;
+            background-image: linear-gradient(rgba(244, 244, 244, 0.5), rgba(200, 200, 200, 0.5));
+        }
+        #loggerDiv {
+          position: absolute;
+          width: 100%;
+          z-index: 999999999999999999999;
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+          top: calc(100% - 285px);
+          border-top: solid 4px rgb(188, 188, 188);
+          background-color: rgb(255,255,255);
+          box-shadow: 0 0.5px 2px 0 rgba(180,180,180,1), 0 6px 20px 0 rgba(180,180,180,1);
+          height: 240px;
+          animation-name: ye;
+          animation-duration: 2s;
+        }
+        * {
+            outline: none;
+        }
+        body { margin: 0; overflow: hidden ; }
+        canvas { width: 100%; height: 100%}
+    </style>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script type="text/javascript" src="/lib.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="getest.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+</head>
+
+<body onload="debug()" style="outline: none; --mdc-theme-primary: rgb(99, 183, 99);" oncontextmenu="return false;">
+    <!-- <button id='testbtn'>Convert back into XML</button> -->
+    <div id="allBeforeLoad">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>  
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <div id='explorertitle'><svg xmlns="https://www.w3.org/2000/svg" style="border-radius: 10px; z-index: 1;"viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path><path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg><span style="z-index: 40; position: absolute; left: 0px; width: 100%;">Explorer</span></div>
+        <title>RoEditor - Editor</title>
+        <div id='explorerdiv'>
+        </div>
+        <div id='propertiestitle'><svg xmlns="https://www.w3.org/2000/svg" style="border-radius: 10px; z-index: 1;"viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path><path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg><span style="z-index: 40; position: absolute; left: 0px; width: 100%;">Properties</span></div>
+        <div id='properties'>
+            ⠀(no object selected)
+        </div>
+        <div style="display: none;overflow-y: scroll;" id="loggerDiv">
+            <div style="
+                font-size: 35px;
+                position: absolute;
+                height: 50px;
+                width: 100%;
+                text-align: center;
+            ">Debugger <div role="progressbar2" id="progressbar2" style="position: absolute;" class="mdc-linear-progress" aria-label="" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+                <div class="mdc-linear-progress__buffer">
+                    <div class="mdc-linear-progress__buffer-bar"></div>
+                    <div class="mdc-linear-progress__buffer-dots"></div>
+                </div>
+                <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+                <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+                </div></div>
+                <span id="close" style="position: absolute; cursor: pointer; width: 30px; top: 10px; height: 30px; right: 10px; font-size: 30px;" class="material-icons">
+                    cancel
+                    </span>
+                <svg xmlns="https://www.w3.org/2000/svg" style="/* border-radius: 10px; */z-index: 1;height: 50px;box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%);" viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path>smell<path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg>
+                <div class="yar" style="background-image: linear-gradient(rgba(244, 0, 0, 0.5), rgba(200, 0, 0, 0.5));cursor: pointer;height: 30px;user-select: none;font-size: 20px;color: rgb(0, 0, 0);">⠀⠀[WARNING]: amongus incoming</div></div>
+        
+        <input placeholder="> Run Command" style="display: none; z-index:999999999" id="runCommand">
+            <aside class="mdc-snackbar" id="uploading" style="z-index:99999999">
+        <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
+            <div id="progressbar" role="progressbar" style="position: absolute;" class="mdc-linear-progress" aria-label="" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div class="mdc-linear-progress__buffer">
+                <div class="mdc-linear-progress__buffer-bar"></div>
+                <div class="mdc-linear-progress__buffer-dots"></div>
+            </div>
+            <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+            <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+            </div>
+            <div class="mdc-snackbar__label" aria-atomic="false">
+                Starting debugger...
+            </div>
+        </div>
+        </aside>
+        <button id="btnYe" style="outline: none; position: absolute; top: calc(100% - 60px); left: 20px;" class="mdc-button mdc-button--raised mdc-button--leading">
+            <span class="mdc-button__ripple"></span>
+            <i class="material-icons mdc-button__icon" aria-hidden="true"
+            >bug_report</i
+            >
+            <span class="mdc-button__label" style="font-size: 20px;">DEBUG</span>
+        </button>
+        <button style="outline: none; color: rgb(255,255,255); position: absolute; top: calc(100% - 67px); left: 145px;" class="mdc-icon-button material-icons">
+            <div class="mdc-icon-button__ripple"></div>
+            info
+        </button>   
+        <div style="z-index: 124872895573897358937;" class="mdc-dialog">
+            <div class="mdc-dialog__container">
+            <div class="mdc-dialog__surface"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="my-dialog-title"
+                aria-describedby="my-dialog-content">
+                <h2 class="mdc-dialog__title" id="my-dialog-title"><!--
+                -->Info<!--
+            --></h2>
+                <div class="mdc-dialog__content" id="my-dialog-content">
+                This <b>debugger</b> works by publishing this place with a script that will make a http request back when a new log is made, then the gamejoin api is used to start a server.<br>
+                If you see a script in workspace named "<b>Debugger</b>", please delete it.<br>
+                That script was automatically generated when you started the debugger
+                </div>
+                <div class="mdc-dialog__actions">
+                <button type="button" style="outline: none;" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Close</span>
+                </button>
+                </div>
+            </div>
+            </div>
+            <div class="mdc-dialog__scrim"></div>
+        </div>
+        <div id="createMenutitle" style="display: none;">Add a object</div>
+        <svg id='createMenutitle' class="svgcreate2" style="z-index: 400; display: none;" xmlns="https://www.w3.org/2000/svg" style="border-radius: 10px; z-index: 1;"viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path><path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg>
+        <div id='createMenu' style="display: none;"></div>
+        <div id="back" style="display: none;"></div>
+        <svg id='createMenu' class="svgcreate" style="z-index: 400; display: none;" xmlns="https://www.w3.org/2000/svg" style="border-radius: 10px; z-index: 1;"viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path><path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg>
+        <svg id='explorerdiv' style="z-index: 20;" xmlns="https://www.w3.org/2000/svg" style="border-radius: 10px; z-index: 1;"viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path><path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg>
+        <svg id='properties' style="z-index: 20;" xmlns="https://www.w3.org/2000/svg" style="border-radius: 10px; z-index: 1;"viewBox="0 0 1440 810" preserveAspectRatio="xMinYMin slice" aria-hidden="true" height="100%" width="100%"><path fill="#efefee" d="M592.66 0c-15 64.092-30.7 125.285-46.598 183.777C634.056 325.56 748.348 550.932 819.642 809.5h419.672C1184.518 593.727 1083.124 290.064 902.637 0H592.66z"></path><path fill="#f6f6f6" d="M545.962 183.777c-53.796 196.576-111.592 361.156-163.49 490.74 11.7 44.494 22.8 89.49 33.1 134.883h404.07c-71.294-258.468-185.586-483.84-273.68-625.623z"></path><path fill="#f7f7f7" d="M153.89 0c74.094 180.678 161.088 417.448 228.483 674.517C449.67 506.337 527.063 279.465 592.56 0H153.89z"></path><path fill="#fbfbfc" d="M153.89 0H0v809.5h415.57C345.477 500.938 240.884 211.874 153.89 0z"></path><path fill="#ebebec" d="M1144.22 501.538c52.596-134.583 101.492-290.964 134.09-463.343 1.2-6.1 2.3-12.298 3.4-18.497 0-.2.1-.4.1-.6 1.1-6.3 2.3-12.7 3.4-19.098H902.536c105.293 169.28 183.688 343.158 241.684 501.638v-.1z"></path><path fill="#e1e1e1" d="M1285.31 0c-2.2 12.798-4.5 25.597-6.9 38.195C1321.507 86.39 1379.603 158.98 1440 257.168V0h-154.69z"></path><path fill="#e7e7e7" d="M1278.31,38.196C1245.81,209.874 1197.22,365.556 1144.82,499.838L1144.82,503.638C1185.82,615.924 1216.41,720.211 1239.11,809.6L1439.7,810L1439.7,256.768C1379.4,158.78 1321.41,86.288 1278.31,38.195L1278.31,38.196z"></path></svg>
+    </div>
+    <div id="thingYEet" style="transition: 1s all linear; position: absolute; width: 100%; height: 100%; top: 0;  left: 0; bottom: 0; right: 0; background-color: rgb(255,255,255); z-index: 99999999999999999999999999999999999999;">
+        <style>
+          @keyframes spin {
+              100% {
+                  -webkit-transform: translateX(-50%) translateY(-50%) rotate(360deg);
+                  transform: translateX(-50%) translateY(-50%) rotate(360deg);
+              }
+          }
+          @keyframes size {
+              0% {
+                  width: 0px; height: 0px;
+                  top: 50%
+              }
+              75% {
+                  width: 400px; height: 140px;
+                  top: 50%
+              }
+              100% {
+                  width: 400px; height: 140px;
+                  top: calc(50% - 50px)
+              }
+          }
+          @keyframes size2 {
+              0% {
+                  font-size: 0rem;
+              }
+              100% {
+                  font-size: 1rem;
+              }
+          }
+        </style>
+        <img id="iconYE" style="
+          transform: translateX(-50%) translateY(-50%);
+          width: 400px;
+          height: 140px;
+          position: absolute; 
+          top: 50%; 
+          left: 50%;
+          animation-name: size;
+          animation-duration: 1.5s;
+          animation-fill-mode: forwards;
+        " src="/titlebackground.png">
+       <p style="
+       transform: translateX(-50%) translateY(-50%);
+       position: absolute;
+       top: calc(50% + 70px);
+       width: 400px;
+       text-align: center;
+       left: 50%;
+       " id="convertText"></p>
+          <div style="    display: inline-block;
+          width: 2rem;
+          height: 2rem;
+          vertical-align: -.125em;
+          border: .25em solid currentColor;
+          transform: translateX(-50%) translateY(-50%);
+          width: 60px;
+          height: 60px;
+          position: absolute;
+          font-size: 0rem;
+          top: calc(50% + 20px);
+          left: 50%;
+          border-right-color: transparent;
+          border-radius: 50%;
+          -webkit-animation: .75s linear infinite spin;
+          animation: .75s linear infinite spin, .1s linear forwards size2 1.25s;" class="spinner-border text-primary"></div>
+      </div>
+        <div id="container" style="width: 100%; height: 100%; position: absolute; z-index: 9999999;"></div>
+
+		<script>
+			var require = { paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } };
+		</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js"></script>
+</body>

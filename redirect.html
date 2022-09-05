@@ -1,0 +1,114 @@
+<html>
+    <head>
+        <script>
+            function MakeRobloxRequest(url, method, body, include, callback, isform) {
+                var Req = new XMLHttpRequest();
+                Req.open(method,url,true)
+                Req.withCredentials = include;
+                Req.onreadystatechange = function() {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            callback(true,Req)
+                        } else {
+                            PrintActivity('Something went wrong')
+                            callback(false,Req)
+                        }
+                    }
+                }
+                if (method != 'GET') {
+                    if (isform == true) {
+                        Req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                    } else {
+                        Req.setRequestHeader('Content-type', 'application/json');
+                    }
+                    Req.send(body)
+                } else {
+                    Req.send()
+                }
+            }
+            if (window.location.href.split('=')[1] != undefined) {
+                var id = window.location.href.split('=')[1]
+                MakeRobloxRequest('/getgame', 'POST', JSON.stringify({id: id}), true, function(is2,res2) {
+                    if (is2 == true) {
+                        var data = JSON.parse(res2.responseText)
+                        if (data.data[0] != undefined) {
+                            if (data.data[0].copyingAllowed == true) {
+                                console.log('yeCopy')
+                                document.cookie = 'dataYE=' + data.data[0].rootPlaceId + '|' + id
+                                document.body.innerHTML = '<h1>Copying is allowed</h1>'
+                                window.location.href = '/test'
+                            } else {
+                                MakeRobloxRequest('/getplace', 'POST', JSON.stringify({id: id}), true, function(is2,res2) {
+                                    if (is2 == true) {
+                                        var data = JSON.parse(res2.responseText)
+                                        if (data[0] != undefined) {
+                                            MakeRobloxRequest('/getgame', 'POST', JSON.stringify({id: data[0].universeId}), true, function(is2,res2) {
+                                                if (is2 == true) {
+                                                    var data4 = JSON.parse(res2.responseText)
+                                                    if (data4.data[0] != undefined) {
+                                                        if (data4.data[0].copyingAllowed == true) {
+                                                            document.body.innerHTML = '<h1>Copying is allowed</h1>'
+                                                            document.cookie = 'dataYE=' + id + '|' + data[0].universeId
+                                                            window.location.href = '/test'
+                                                        } else {
+                                                            window.location.href = '/'
+                                                        }
+                                                    } else {
+                                                        window.location.href = '/'
+                                                    }
+                                                } else {
+                                                    window.location.href = '/'
+                                                }
+                                            })
+                                        } else {
+                                            window.location.href = '/'
+                                        }
+                                    } else {
+                                        window.location.href = '/'
+                                    }
+                                })
+                            }
+                        } else {
+                            MakeRobloxRequest('/getplace', 'POST', JSON.stringify({id: id}), true, function(is2,res2) {
+                                if (is2 == true) {
+                                    var data = JSON.parse(res2.responseText)
+                                    if (data[0] != undefined) {
+                                        MakeRobloxRequest('/getgame', 'POST', JSON.stringify({id: data[0].universeId}), true, function(is2,res2) {
+                                            if (is2 == true) {
+                                                var data4 = JSON.parse(res2.responseText)
+                                                if (data4.data[0] != undefined) {
+                                                    if (data4.data[0].copyingAllowed == true) {
+                                                        document.body.innerHTML = '<h1>Copying is allowed</h1>'
+                                                        document.cookie = 'dataYE=' + id + '|' + data[0].universeId
+                                                        window.location.href = '/test'
+                                                    } else {
+                                                        window.location.href = '/'
+                                                    }
+                                                } else {
+                                                    window.location.href = '/'
+                                                }
+                                            } else {
+                                                window.location.href = '/'
+                                            }
+                                        })
+                                    } else {
+                                        window.location.href = '/'
+                                    }
+                                } else {
+                                    window.location.href = '/'
+                                }
+                            })
+                        }
+                    } else {
+                        window.location.href = '/'
+                    }
+                })
+            } else {
+                window.location.href = '/'
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Redirecting...</h1>
+    </body>
+</html>

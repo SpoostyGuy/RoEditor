@@ -1,0 +1,736 @@
+
+<head>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap');
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 98;
+        }
+        li:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        li {
+            cursor: pointer;
+        }
+        #loading2 {
+            position: relative;
+            left: 50%;
+            top: 42px;
+            -moz-transform: translateX(-50%);
+             -webkit-transform: translateX(-50%);
+             transform: translateX(-50%);
+             z-index: 98;
+        }
+        #authenitcate {
+            position: absolute;
+            top: 25%;
+            height: 200px;
+            width: 300px;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+             display: none;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        .gradient {
+            animation-duration: 1.8s;
+            animation-fill-mode: forwards;
+            animation-iteration-count: infinite;
+            animation-name: placeHolderShimmer;
+            animation-timing-function: linear;
+            background: #f6f7f8;
+            background: linear-gradient(to right, #fafafa 8%, #cbcbcb 38%, #fafafa 54%);
+            background-size: 1000px 640px;
+            
+            position: relative;
+            
+        }
+
+        @keyframes placeHolderShimmer{
+            0%{
+                background-position: -468px 0
+            }
+            100%{
+                background-position: 468px 0
+            }
+        }
+        #box {
+            position: absolute;
+            top: 25%;
+            height: 100px;
+            width: 300px;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+             display: none;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #jsenabledbox {
+            position: absolute;
+            top: 25%;
+            height: 100px;
+            width: 300px;
+            left: 50%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            -moz-transform: translateX(-50%) translateY(-50%);
+             -webkit-transform: translateX(-50%) translateY(-50%);
+             transform: translateX(-50%) translateY(-50%);
+             z-index: 99;
+            display: block;
+            animation-name: movein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+        #clonebox {
+            height: 95%;
+            width: 95%;
+            background: rgba(214, 214, 214, 0.4);
+            box-shadow: 0 8px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+             z-index: 1;
+        }
+        #head {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            display: inline-block;
+            border-radius: 50%;
+            width: 75;
+            height: 75;
+            -moz-transform: translateY(-50%);
+             -webkit-transform: translateY(-50%);
+             transform: translateY(-50%);
+             z-index: 99;
+        }
+        #background {
+            height: 300px;
+            width: 300px;
+            background: rgba(214, 214, 214, 0);
+             z-index: 1;
+            padding: 20px;
+            float: left;
+        }
+        #selection {
+            position: relative;
+            top: 180px;
+            height: 90%;
+            width: 90%;
+            left: 0;
+            background: rgba(214, 214, 214, 0);
+             z-index: 1;
+             left: 50%;
+             -moz-transform: translateX(-50%) ;
+             -webkit-transform: translateX(-50%) ;
+             transform: translateX(-50%) ;
+             content: "";
+             display: none;
+            clear: both;
+            animation-name: moveup;
+            animation-duration: 0.8s;
+            animation-fill-mode: forwards;
+            overflow-y:auto;
+        }
+        #navbar {
+            position: fixed;
+            height: 80px;
+            top: 0px;
+            width: 100%;
+            background: rgb(226, 226, 226);
+            box-shadow: 0 8px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+             z-index: 97;
+             display: none;
+        }
+        #signin {
+            position: absolute;
+            text-align: center;
+            width: 300px;
+            top: 8px;
+            color: rgb(68, 68, 68);
+            
+        }
+        #username {
+            position: absolute;
+            text-align: center;
+            width: 100%;
+            top: 0px;
+            color: rgb(68, 68, 68);
+        }
+        #howuse {
+            position: absolute;
+            text-align: center;
+            width: 100%;
+            top: 40px;
+            color: rgb(68, 68, 68);
+        }
+        #title {
+            text-align: center;
+            width: 248px;
+            height: 68px;
+        }
+        #darkbackground {
+            background: rgba(0, 0, 0, 0);
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: none;
+            z-index: 98;
+            animation-name: fadein;
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+        @keyframes movein {
+            0% {
+                background: rgba(214, 214, 214, 0.4);
+                box-shadow: 0 0.5px 0.5px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+                top: 40%;
+            }
+            40% {
+                background: rgb(214, 214, 214);
+                top: 50%;
+            }
+            100% {
+                background: rgb(214, 214, 214);
+                box-shadow: 0 8px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+                top: 50%;
+            }
+        }
+        @keyframes fadein {
+            0% {
+                background: rgba(0, 0, 0, 0);
+            }
+            100% {
+                background: rgb(0, 0, 0, 0.5);
+            }
+        }
+        @keyframes moveup {
+            0% {
+                top: 180px;
+            }
+            100% {
+                top: 80px;
+            }
+        }
+    </style>
+    <script>
+        var doeswork = true
+        console.log('╔═══╦════╦═══╦═══╦╗')
+        console.log('║╔═╗║╔╗╔╗║╔═╗║╔═╗║║')
+        console.log('║╚══╬╝║║╚╣║─║║╚═╝║║')
+        console.log('╚══╗║─║║─║║─║║╔══╩╝')
+        console.log('║╚═╝║─║║─║╚═╝║║──╔╗')
+        console.log('╚═══╝─╚╝─╚═══╩╝──╚╝')
+        console.log('KEEP YOUR ACCOUNT SAFE')
+        console.log('DO NOT PASTE ANYTHING HERE!')
+        function PrintActivity(print) {
+            console.log('[RoEditor] ' + print)
+        }
+        function MakeHeadersReadable(headers) {
+            var arr = headers.trim().split(/[\r\n]+/);
+
+            // Create a map of header names to values
+            var headerMap = {};
+            arr.forEach(function (line) {
+                var parts = line.split(': ');
+                var header = parts.shift();
+                var value = parts.join(': ');
+                headerMap[header] = value;
+            });
+            return headerMap
+        }
+        function MakeRobloxRequest(url, method, body, include, callback, isform) {
+            var Req = new XMLHttpRequest();
+            Req.open(method,url,true)
+            Req.withCredentials = include;
+            Req.onreadystatechange = function() {
+                if (this.readyState == 4) {
+                    if (this.status == 200) {
+                        callback(true,Req)
+                    } else {
+                        PrintActivity('Something went wrong')
+                        callback(false,Req)
+                    }
+                }
+            }
+            if (method != 'GET') {
+                if (isform == true) {
+                    Req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                } else {
+                    Req.setRequestHeader('Content-type', 'application/json');
+                }
+                Req.send(body)
+            } else {
+                Req.send()
+            }
+        }
+        var userinfo = ''
+        var creations = {}
+
+        function FindTargetId(id, table) {
+            var thing = ''
+            table.forEach(async function(item) {
+                if (id == item.targetId) {
+                    thing = item
+                }
+            })
+            return thing
+        }
+
+        async function KeepTryingThumb(thing,img) {
+            while (true) {
+                var works = false
+                var is = undefined
+                var res = undefined
+                var tab = {}
+                tab[thing] = 'm'
+                MakeRobloxRequest('/loadthumbnails', 'POST', JSON.stringify(tab), true, function(is2,res2) {
+                    res = res2
+                    is = is2
+                })
+                while (true) {
+                    if (is != undefined) {
+                        break
+                    }
+                    await new Promise(r => setTimeout(r, 10));
+                }
+                if (is === true) {
+                    images = JSON.parse(res.responseText)
+                    var yes = images.data[0]
+                    if (yes != undefined) {
+                        if (yes.state === 'Completed') {
+                            img.src = yes.imageUrl
+                            img.className = ""
+                            break
+                            PrintActivity('Loaded thumbnail for: ' + item.rootPlaceId)     
+                        } else {
+                            img.className = "gradient"
+                        }
+                    }
+                }
+                await new Promise(r => setTimeout(r, 100));
+            }
+        }
+
+        async function loadGamesMade() {
+            PrintActivity('Fetching User...')
+            MakeRobloxRequest('/getcurrentuser', 'GET', null, true, function(is,res) {
+                userinfo = JSON.parse(res.responseText)
+                if (userinfo['errors'] != undefined || userinfo['id'] == undefined) {
+                    window.location.href = '/login'
+                }
+            })
+            while (true) {
+                if (typeof(userinfo) != 'string') {
+                    break
+                }
+                await new Promise(r => setTimeout(r, 10));
+            }
+            await new Promise(r => setTimeout(r, 500));
+            MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, function(is,res) {
+                head = JSON.parse(res.responseText)
+                head.data.forEach(async function(item) {
+                    document.getElementById('head').src = item.imageUrl
+                })
+            })
+            document.getElementById('logout').onclick = function (event) {
+                event.stopPropagation();
+                document.getElementById('chooser').style.display = 'block'
+                document.getElementById('chooser').style.opacity = '1'
+                MakeRobloxRequest('/logout', 'POST', JSON.stringify({}), true, function(is,res) {
+                    console.log(res.status)
+                    window.location.href = '/login'
+                })
+            }
+            document.getElementById('head').onclick = async function (event) {
+                event.stopPropagation();
+                if (document.getElementById('chooser').style.display == 'none') {
+                    document.getElementById('chooser').style.display = 'block'
+                    await new Promise(r => setTimeout(r, 10));
+                    document.getElementById('chooser').style.opacity = '1'
+                } else {
+                    document.getElementById('chooser').style.opacity = '0'
+                    await new Promise(r => setTimeout(r, 150));
+                    document.getElementById('chooser').style.display = 'none'
+                }
+            }
+            document.body.onclick = async function() {
+                document.getElementById('chooser').style.opacity = '0'
+                await new Promise(r => setTimeout(r, 150));
+                document.getElementById('chooser').style.display = 'none'
+            }
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('username').innerHTML = helloPage.split('|')[1]+ ' ' + '<span style="font-size:20px;">(' + helloPage.split('|')[0] + ')</span>' + ', ' + userinfo.name + '!'
+            document.getElementById('navbar').style.display = 'block'
+            PrintActivity('Got User: ' + userinfo.name)
+            var objects = {}
+            PrintActivity('Fetching games...')
+            MakeRobloxRequest('/getgamesmade', 'GET', null, true, function(is,res) {
+                creations = JSON.parse(res.responseText)
+                creations.data.forEach(async function(item) {
+                    objects[item.id] = "m"
+                })
+            })
+            while (true) {
+                if (Object.keys(objects).length > 0) {
+                    break
+                }
+                await new Promise(r => setTimeout(r, 10));
+            }
+            await new Promise(r => setTimeout(r, 500));
+            PrintActivity('Got games')
+            var images = ''
+            PrintActivity('Loading thumbnails...')
+            MakeRobloxRequest('/loadthumbnails', 'POST', JSON.stringify(objects), true, function(is,res) {
+                if (is === true) {
+                    images = JSON.parse(res.responseText)
+                    creations.data.forEach(async function(item,index) {
+                        var holder = document.createElement('div')
+                        holder.id = 'background'
+                        var background = document.createElement('div')
+                        background.id = 'clonebox'
+                        var img = document.createElement('img')
+                        var h3 = document.createElement('h3')
+                        img.height = 180
+                        h3.id = 'title'
+                        h3.innerHTML = item.name
+                        img.width = 248;
+                        holder.className = 'universeId=' + item.id + ';rootPlaceId=' + item.rootPlaceId
+                        var yes = FindTargetId(item.id,images.data)
+                        document.getElementById('loading').style.display = 'none'
+                        if (yes != undefined) {
+                            if (yes.state === 'Completed') {
+                                img.src = yes.imageUrl
+                                PrintActivity('Loaded thumbnail for: ' + item.rootPlaceId)
+                            } else {
+                                KeepTryingThumb(item.id,img)
+                                img.className = "gradient"
+                            }
+                        }
+                        background.onpointerdown = function () {
+                            if (doeswork === true) {
+                                background.style.background = 'rgba(255, 255, 255, 0.4)'
+                            }
+                        }
+                        background.onclick = async function () {
+                            if (doeswork === true) {
+                                doeswork = false
+                                document.body.scrollTop = 0;
+                                document.documentElement.scrollTop = 0;
+                                document.body.style.overflowY = 'hidden';
+                                document.getElementById('box').style.display = 'block'
+                                document.getElementById('darkbackground').style.display = 'block'
+                                document.cookie = 'dataYE=' + item.rootPlaceId + '|' + item.id
+                                await new Promise(r => setTimeout(r, 1000));
+                                window.location.href = '/test'
+                            }
+                        }
+                        background.onmouseenter = function () {
+                            if (doeswork === true) {
+                                background.style.background = 'rgba( 75,  75, 75, 0.4)'
+                            }
+                        }
+                        background.onmouseleave = function () {
+                            if (doeswork === true) {
+                                background.style.background = 'rgba(214, 214, 214, 0.4)'
+                            }
+                        }
+                        holder.appendChild(background)
+                        background.appendChild(img)
+                        background.appendChild(h3)
+                        document.getElementById('selection').style.display = 'table'
+                        document.getElementById('selection').appendChild(holder)
+                    })
+                    var holder = document.createElement('div')
+                    holder.id = 'background'
+                    var background = document.createElement('div')
+                    background.id = 'clonebox'
+                    var img = document.createElement('img')
+                    img.height = 248
+                    img.width = 248;
+                    img.setAttribute('draggable', false);
+                    img.src = 'https://icons-for-free.com/iconfiles/png/512/circle+more+plus+icon-1320183136549593898.png'
+                    background.onpointerdown = function () {
+                        if (doeswork === true) {
+                            background.style.background = 'rgba(255, 255, 255, 0.4)'
+                        }
+                    }
+                    background.onclick = async function () {
+                        if (doeswork === true) {
+                            doeswork = false
+                            document.body.scrollTop = 0;
+                            document.documentElement.scrollTop = 0;
+                            document.body.style.overflowY = 'hidden';
+                            document.getElementsByClassName('redirect')[0].innerHTML = 'Creating...'
+                            document.getElementById('box').style.display = 'block'
+                            document.getElementById('darkbackground').style.display = 'block'
+                            var response4 = undefined
+                            var status4 = undefined
+                            await fetch('/newPlace',{
+                                method: 'POST',
+                                headers: {
+                                    'content-type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    'id': 'id'
+                                })
+                            })
+                                .then(res => {
+                                    status4 = res.status
+                                    return res.text()
+                                })
+                                .then(res => {
+                                    response4 = res
+                                })
+                            console.log(status4)
+                            if (status4 == 200) {
+                                document.getElementsByClassName('redirect')[0].innerHTML = 'Waiting...'
+                                while (true) {
+                                    var placeSource = undefined
+                                    await fetch('/downloadasset',{
+                                        method: 'POST',
+                                        headers: {
+                                            'content-type': 'application/json'
+                                        },
+                                        body: JSON.stringify({id: response4.split('|')[0]})
+                                    })
+                                        .then(response => response.text()) 
+                                        .then(textString => {
+                                            placeSource = textString
+                                        });
+                                    var smallerSource = placeSource.slice(0, 14)
+                                    console.log(smallerSource)
+                                    if (smallerSource == "<roblox xmlns:") {
+                                        break
+                                    } else {
+                                        await new Promise(r => setTimeout(r, 250));
+                                    }
+                                }
+                                document.getElementsByClassName('redirect')[0].innerHTML = 'Redirecting...'
+                                document.cookie = 'dataYE=' + response4
+                                await new Promise(r => setTimeout(r, 1000));
+                                window.location.href = '/test'
+                            } else {
+                                document.body.style = ""
+                                document.getElementsByClassName('redirect')[0].innerHTML = 'Redirecting...'
+                                document.getElementById('box').style.display = 'none'
+                                document.getElementById('darkbackground').style.display = 'none'
+                            }
+                        }
+                    }
+                    background.onmouseenter = function () {
+                        if (doeswork === true) {
+                            background.style.background = 'rgba( 75,  75, 75, 0.4)'
+                        }
+                    }
+                    background.onmouseleave = function () {
+                        if (doeswork === true) {
+                            background.style.background = 'rgba(214, 214, 214, 0.4)'
+                        }
+                    }
+                    holder.appendChild(background)
+                    background.appendChild(img)
+                    document.getElementById('selection').style.display = 'table'
+                    document.getElementById('selection').appendChild(holder)
+                }
+            })
+            document.title = "RoEditor - Home"
+            console.log('╔═══╦════╦═══╦═══╦╗')
+            console.log('║╔═╗║╔╗╔╗║╔═╗║╔═╗║║')
+            console.log('║╚══╬╝║║╚╣║─║║╚═╝║║')
+            console.log('╚══╗║─║║─║║─║║╔══╩╝')
+            console.log('║╚═╝║─║║─║╚═╝║║──╔╗')
+            console.log('╚═══╝─╚╝─╚═══╩╝──╚╝')
+            console.log('KEEP YOUR ACCOUNT SAFE')
+            console.log('DO NOT PASTE ANYTHING HERE!')
+        }
+        try {
+            loadGamesMade()
+        } catch {
+            PrintActivity('falied somehow')
+        }
+    </script>
+</head>
+<body>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <noscript>
+        <div id='jsenabledbox'>
+            <h4 id='signin'>Please enable JavaScript in your browser</h4>
+        </div>
+     </noscript>
+     <div id='darkbackground'></div>
+     <title>RoEditor - Loading...</title>
+    <div id='selection'>
+      
+    </div>
+    <nav id='navbar'>
+        <img id='head'>
+        <div class="popove fade bottom in" role="tooltip" id="chooser" style='-webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    --blue: #007bff;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #dc3545;
+    --orange: #fd7e14;
+    --yellow: #ffc107;
+    --green: #28a745;
+    --teal: #20c997;
+    --cyan: #17a2b8;
+    --white: #fff;
+    --gray: #6c757d;
+    --gray-dark: #343a40;
+    --primary: #007bff;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --font-family-sans-serif: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    --font-family-monospace: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-weight: 400;
+    box-sizing: border-box;
+    font-family: "Source Sans Pro",Arial,Helvetica,sans-serif;
+    color: #343434;
+    font-size: 14px;
+    line-height: 1.428;
+    margin: 0;
+    background-color: #fff;
+    box-shadow: 0 1px 4px 0 rgba(25,25,25,.3);
+    background-clip: padding-box;
+    border-radius: 4px;
+    border: 0;
+    max-width: 276px;
+    text-align: left;
+    padding: 0;
+    position: absolute;
+    white-space: normal;
+    z-index: 1060;
+    display: none;
+    margin-top: 6px;
+    opacity: 0;
+    transition: opacity .15s linear;
+    top: 100px;
+    right: 10px;
+    display: none;'>
+        <div class="arrow" style="     font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif;
+        color: #343434;
+        font-size: 14px;
+        line-height: 1.428;
+        text-align: left;
+        white-space: normal;
+        margin: 0;
+        padding: 0;
+        border: none;
+        cursor: pointer;
+        background-repeat: no-repeat;
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-style: solid;
+        border-width: 7px;
+        margin-left: -7px;
+        border-top-width: 0;
+        border-bottom-color: #fff;
+        top: -7px;
+        z-index: 1060;
+        left: 50%;left: 50%;">
+        </div>
+        <div style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif;
+        color: #343434;
+        font-size: 14px;
+        line-height: 1.428;
+        text-align: left;
+        white-space: normal;
+        margin: 0;
+        border: none;
+        padding: 0;" class="popove-content">
+            <ul style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif;
+            color: #343434;
+            line-height: 1.428;
+            white-space: normal;
+            background-color: #fff;
+            border-radius: 4px;
+            background-clip: padding-box;
+            box-shadow: 0 -5px 20px rgba(25,25,25,.15);
+            float: left;
+            font-size: 16px;
+            margin: 0;
+            padding: 0;
+            min-width: 105px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            width: 100%;
+            top: 100%;
+            left: 0;
+            list-style: none;
+            text-align: left;
+            z-index: 1020;
+            display: block;
+            position: relative;
+            border: 0;">
+                <li style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif;
+                color: #343434;
+                line-height: 1.428;
+                font-size: 16px;
+                border: none;
+                list-style: none;
+                margin: 0;
+                white-space: nowrap;
+                padding: 0 6px;
+                width: auto;" id="logout">
+                    <a style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif;
+                    font-size: 16px;
+                    list-style: none;
+                    margin: 0;
+                    border: none;
+                    transition: none;
+                    text-decoration: none;
+                    clear: both;
+                    line-height: 1.42857;
+                    padding: 10px 6px;
+                    white-space: nowrap;
+                    display: block;
+                    color: #191919;
+                    font-weight: 400;">Log out</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+        </img>
+        <h2 id='username'></h2>
+        <h4 id='howuse'>Select any game down there to start editing</h4>
+    </nav>
+    <div id='box'>
+        <h3 class="redirect" id='signin'>Redirecting...</h3>
+        <img id="loading2" src="https://images.rbxcdn.com/4bed93c91f909002b1f17f05c0ce13d1.gif"></img>
+    </div>
+    <img id="loading" src="https://images.rbxcdn.com/4bed93c91f909002b1f17f05c0ce13d1.gif"></img>
+</body>
+
+

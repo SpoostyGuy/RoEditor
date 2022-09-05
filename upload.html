@@ -1,0 +1,209 @@
+<html>
+    <head>
+        <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+        <script>
+            async function onload() {
+                const full = new mdc.dialog.MDCDialog(document.getElementById('full'));
+                const dialog = new mdc.dialog.MDCDialog(document.getElementById('dialog'));
+                const dialog2 = new mdc.dialog.MDCDialog(document.getElementById('dialog2'));
+                const bar = new mdc.snackbar.MDCSnackbar(document.getElementById('uploading'));
+                const textField = new mdc.textField.MDCTextField(document.querySelector('.mdc-text-field'));
+                const yes = new mdc.linearProgress.MDCLinearProgress(document.querySelector('.mdc-linear-progress'));
+                document.getElementsByClassName('mdc-text-field__input')[0].onfocus = function() {
+                  document.getElementsByClassName('mdc-text-field mdc-text-field--filled mdc-ripple-upgraded')[0].getElementsByClassName('mdc-floating-label')[0].style.color = '#007bff'
+                }
+                document.getElementsByClassName('mdc-text-field__input')[0].onblur = function() {
+                  document.getElementsByClassName('mdc-text-field mdc-text-field--filled mdc-ripple-upgraded')[0].getElementsByClassName('mdc-floating-label')[0].style.color = 'rgba(0, 0, 0, 0.6)'
+                }
+                full.open()
+                full.listen('MDCDialog:closing',async function(ye) {
+                  if (ye.detail.action == 'upload') {
+                    dialog.open()
+                  } else {
+                    await new Promise(r => setTimeout(r, 200));
+                    window.parent.postMessage('close')
+                  }
+                })
+                dialog2.listen('MDCDialog:closing',async function(ye) {
+                  if (ye.detail.action == 'back') {
+                    full.open()
+                  } else {
+                    window.parent.postMessage('close')
+                  }
+                })
+                dialog.listen('MDCDialog:closing',async function(ye) {
+                   if (ye.detail.action == 'upload') {
+                    var response = undefined
+                    var status = undefined
+                    yes.foundation.setDeterminate(false)
+                    bar.timeoutMs = -1
+                    bar.open()
+                    yes.foundation.open()
+                    var xmlStr = "<roblox></roblox>"
+                    var response = undefined
+                    var status = undefined
+                    await fetch('/files/uploadXMLFIle', {
+                        method: 'POST',
+                        body: document.getElementsByClassName('mdc-text-field__input')[0].value + '#!' + xmlStr,
+                        headers: {
+                            'Content-Type': 'application/xml'
+                        }
+                    })
+                        .then(res => {
+                            status = res.status
+                            return res.json()
+                        })
+                        .then(res => {
+                            response = res
+                        })
+                        if (status == 200) {
+                            bar.close()
+                            document.getElementById('uploadStatus').innerHTML = "File was uploaded successfully<br>Id: <b>" + response.id + "</b>"
+                            dialog2.open()
+                        } else {
+                            bar.close()
+                            document.getElementById('uploadStatus').innerHTML = "File failed to upload <b>" + response.errors[0] + "</b>"
+                            dialog2.open()
+                        }
+                   } else {
+                    full.open()
+                   }
+                })
+            }
+        </script>
+        <style>
+            .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+              color: #007bff;
+            }
+            .mdc-linear-progress {
+                position: absolute;
+                width: 100%;
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+                outline: 1px solid transparent;
+                overflow: hidden;
+                transition: opacity 250ms 0ms cubic-bezier(0.4, 0, 0.6, 1);
+                top: calc(100% - 4px);
+                border-bottom-left-radius: 10px;
+                border-bottom-right-radius: 10px;
+            }
+        </style>
+
+        <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    </head>
+    <body style="--mdc-theme-primary: #007bff;" onload="onload()">
+        <aside class="mdc-snackbar" id="uploading">
+            <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
+                <div role="progressbar" style="position: absolute;" class="mdc-linear-progress" aria-label="" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+                <div class="mdc-linear-progress__buffer">
+                    <div class="mdc-linear-progress__buffer-bar"></div>
+                    <div class="mdc-linear-progress__buffer-dots"></div>
+                </div>
+                <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+                <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                    <span class="mdc-linear-progress__bar-inner"></span>
+                </div>
+                </div>
+              <div class="mdc-snackbar__label" aria-atomic="false">
+                    Uploading...
+              </div>
+            </div>
+          </aside>
+          <div id="dialog2" class="mdc-dialog">
+            <div class="mdc-dialog__container">
+              <div class="mdc-dialog__surface"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="my-dialog-title"
+                aria-describedby="my-dialog-content">
+                <h2 class="mdc-dialog__title" id="my-dialog-title">
+                    Upload status
+                  </h2>
+                <div id="uploadStatus" class="mdc-dialog__content" id="my-dialog-content">
+                  
+                </div>
+                <div class="mdc-dialog__actions">
+                  <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="back">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Back</span>
+                  </button>
+                  <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Close</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="mdc-dialog__scrim"></div>
+        </div>
+        <div id="dialog" class="mdc-dialog">
+            <div class="mdc-dialog__container">
+              <div class="mdc-dialog__surface"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="my-dialog-title"
+                aria-describedby="my-dialog-content">
+                <h2 class="mdc-dialog__title" id="my-dialog-title">
+                    Upload file?
+                  </h2>
+                <div class="mdc-dialog__content" id="my-dialog-content">
+                  The password to this file cannot be changed when uploaded
+                </div>
+                <div class="mdc-dialog__actions">
+                  <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Cancel</span>
+                  </button>
+                  <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="upload">
+                    <div class="mdc-button__ripple"></div>
+                    <span class="mdc-button__label">Upload</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="mdc-dialog__scrim"></div>
+        </div>
+    </body>
+    <div id="full" class="mdc-dialog">
+      <div class="mdc-dialog__container">
+        <div class="mdc-dialog__surface"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="my-dialog-title"
+          aria-describedby="my-dialog-content">
+          <h2 class="mdc-dialog__title" id="my-dialog-title">
+              File upload
+            </h2>
+          <div class="mdc-dialog__content" id="my-dialog-content">
+              Please enter a password for the file your uploading
+          </div>
+          <label style="transform: translateX(-50%); position: relative; left: 50%; width: 80%;" class="mdc-text-field mdc-text-field--filled">
+            <span class="mdc-text-field__ripple"></span>
+            <span class="mdc-floating-label" id="my-label-id">Password</span>
+            <input class="mdc-text-field__input" type="password" aria-labelledby="my-label-id">
+            <span class="mdc-line-ripple"></span>
+          </label>
+          <div class="mdc-dialog__content" id="my-dialog-content">
+              Note: this password cannot be changed when uploaded;<br>
+              The file will be <b>encrypted</b> using <b>sha512</b> against your password<br>
+              Your password will also hashed with <b>sha512</b>
+
+          </div>
+          <div class="mdc-dialog__actions">
+            <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="cancel">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Cancel</span>
+            </button>
+            <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="upload">
+              <div class="mdc-button__ripple"></div>
+              <span class="mdc-button__label">Upload</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="mdc-dialog__scrim"></div>
+  </div>
+</body>
+</html>
