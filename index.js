@@ -1378,7 +1378,8 @@ async function DoCrap() {
             ip = ip.substr(7)
         }
     })
-    server.listen(process.env.PORT || 3000)
+    module.exports = server
+    //server.listen(process.env.PORT || 3000)
 }
 
 DoCrap()
