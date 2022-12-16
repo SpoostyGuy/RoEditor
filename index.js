@@ -12,7 +12,10 @@ app.use(cors({
     credentials: true
 }));
 var fs = require('fs')
-var loginCookie = JSON.parse(fs.readFileSync(__dirname + '/cred.json').toString((('utf8')))).cookie
+var loginCookie = ''
+if (fs.existsSync(__dirname + '/cred.json')) {
+    loginCookie = JSON.parse(fs.readFileSync(__dirname + '/cred.json').toString((('utf8')))).cookie
+}
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
