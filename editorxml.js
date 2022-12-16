@@ -1181,102 +1181,105 @@ async function ShowWebGLItems() {
         if (object.getAttribute('class').includes('Part') == true) {
             var properties = object.children[0]
             if (properties != undefined) {
-                var color = properties.querySelector('[name="Color3uint8"]')
-                var color2 = properties.querySelector('[name="BrickColor"]')
-                var cframe = properties.querySelector('[name="CFrame"]')
-                var size = properties.querySelector('[name="size"]')
-                var posx = cframe.getElementsByTagName('X')[0].textContent
-                var posy = cframe.getElementsByTagName('Y')[0].textContent
-                var posz = cframe.getElementsByTagName('Z')[0].textContent
-                var sizex = size.getElementsByTagName('X')[0].textContent
-                var sizey = size.getElementsByTagName('Y')[0].textContent
-                var sizez = size.getElementsByTagName('Z')[0].textContent
-                var R00 = cframe.getElementsByTagName('R00')[0].textContent
-                var R01 = cframe.getElementsByTagName('R01')[0].textContent
-                var R02 = cframe.getElementsByTagName('R02')[0].textContent
-                var R10 = cframe.getElementsByTagName('R10')[0].textContent
-                var R11 = cframe.getElementsByTagName('R11')[0].textContent
-                var R12 = cframe.getElementsByTagName('R12')[0].textContent
-                var R20 = cframe.getElementsByTagName('R20')[0].textContent
-                var R21 = cframe.getElementsByTagName('R21')[0].textContent
-                var R22 = cframe.getElementsByTagName('R22')[0].textContent
-                const box = new THREE.BoxGeometry(parseInt(sizex), parseInt(sizey), parseInt(sizez))
-                var matrix = new THREE.Matrix4(); // create once and reuse it
-                matrix.set(
-                    R00,R01,R02,  posx,
-                    R10,R11,R12,  posy,
-                    R20,R21,R22,  posz,
-                    0,   0,   0,  1
-                );
+                try {
+                    var color = properties.querySelector('[name="Color3uint8"]')
+                    var color2 = properties.querySelector('[name="BrickColor"]')
+                    var cframe = properties.querySelector('[name="CFrame"]')
+                    var size = properties.querySelector('[name="size"]')
+                    var posx = cframe.getElementsByTagName('X')[0].textContent
+                    var posy = cframe.getElementsByTagName('Y')[0].textContent
+                    var posz = cframe.getElementsByTagName('Z')[0].textContent
+                    var sizex = size.getElementsByTagName('X')[0].textContent
+                    var sizey = size.getElementsByTagName('Y')[0].textContent
+                    var sizez = size.getElementsByTagName('Z')[0].textContent
+                    var R00 = cframe.getElementsByTagName('R00')[0].textContent
+                    var R01 = cframe.getElementsByTagName('R01')[0].textContent
+                    var R02 = cframe.getElementsByTagName('R02')[0].textContent
+                    var R10 = cframe.getElementsByTagName('R10')[0].textContent
+                    var R11 = cframe.getElementsByTagName('R11')[0].textContent
+                    var R12 = cframe.getElementsByTagName('R12')[0].textContent
+                    var R20 = cframe.getElementsByTagName('R20')[0].textContent
+                    var R21 = cframe.getElementsByTagName('R21')[0].textContent
+                    var R22 = cframe.getElementsByTagName('R22')[0].textContent
+                    const box = new THREE.BoxGeometry(parseInt(sizex), parseInt(sizey), parseInt(sizez))
+                    var matrix = new THREE.Matrix4(); // create once and reuse it
+                    matrix.set(
+                        R00,R01,R02,  posx,
+                        R10,R11,R12,  posy,
+                        R20,R21,R22,  posz,
+                        0,   0,   0,  1
+                    );
 
-                var myquat = new THREE.Quaternion()
-                myquat.setFromRotationMatrix(matrix)
-                box.applyQuaternion(myquat);
+                    var myquat = new THREE.Quaternion()
+                    myquat.setFromRotationMatrix(matrix)
+                    box.applyQuaternion(myquat);
 
-                // outlinePass.selectedObjects = box;
+                    // outlinePass.selectedObjects = box;
 
-                var colorYe = 'rgba(200,200,200,1)'
+                    var colorYe = 'rgba(200,200,200,1)'
 
-                if (color != null) {
-                    colorYe = color3ToRgba(color.textContent)
-                }
-
-                if (color2 != null && color2 != '') {
-                    console.log(color2.textContent)
-                    colorYe = 'rgba(' + brickToRGB[color2.textContent] + ',1)'
-                }
-
-                console.log(colorYe)
-                var material = undefined
-
-                if (object.querySelector('[class="Decal"]') != null) {
-                    var id = object.querySelector('[class="Decal"]').children[0].querySelector('[name="Texture"]').textContent.replace(/\D/g, '')
-                    MakeRobloxRequest('/assetURL','POST', JSON.stringify({id: id}),true,function(is,res) {
-                        var bodyYE = JSON.parse(res.responseText)
-                        if (bodyYE.locations != undefined) {
-                            var loader = new THREE.TextureLoader();
-                            loader.load(bodyYE.locations[0].location, function ( texture ) {
-                                material = new THREE.MeshMatcapMaterial( { color: colorYe, map: texture } );
-                            })
-                        } else {
-                            material = new THREE.MeshMatcapMaterial( { color: colorYe} );
-                        }
-                    })
-                    while (true) {
-                        if (material != undefined) {
-                            break
-                        }
-                        await new Promise(r => setTimeout(r, 10));
+                    if (color != null) {
+                        colorYe = color3ToRgba(color.textContent)
                     }
-                } else {
-                    material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+
+                    if (color2 != null && color2 != '') {
+                        console.log(color2.textContent)
+                        colorYe = 'rgba(' + brickToRGB[color2.textContent] + ',1)'
+                    }
+
+                    console.log(colorYe)
+                    var material = undefined
+
+                    if (object.querySelector('[class="Decal"]') != null) {
+                        var id = object.querySelector('[class="Decal"]').children[0].querySelector('[name="Texture"]').textContent.replace(/\D/g, '')
+                        MakeRobloxRequest('/assetURL','POST', JSON.stringify({id: id}),true,function(is,res) {
+                            var bodyYE = JSON.parse(res.responseText)
+                            if (bodyYE.locations != undefined) {
+                                var loader = new THREE.TextureLoader();
+                                loader.load(bodyYE.locations[0].location, function ( texture ) {
+                                    material = new THREE.MeshMatcapMaterial( { color: colorYe, map: texture } );
+                                })
+                            } else {
+                                material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                            }
+                        })
+                        while (true) {
+                            if (material != undefined) {
+                                break
+                            }
+                            await new Promise(r => setTimeout(r, 10));
+                        }
+                    } else {
+                        material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                    }
+                    const mesh = new THREE.Mesh(box,material)
+                    mesh.quaternion.setFromRotationMatrix( matrix );
+                    //mesh.scale.set( parseInt(sizex), parseInt(sizey), parseInt(sizez) );
+                    mesh.position.set(parseInt(posx), parseInt(posy), parseInt(posz))
+                    
+                    boxes[object.getAttribute('referent')] = [box,[parseInt(posx),parseInt(posy),parseInt(posz)],mesh,matrix]
+
+                    ids[mesh.uuid] = object.getAttribute('referent')
+                    scene.add(mesh)
+                    
+                    console.log(mesh)
+
+                    /*
+                    const dir = new THREE.Vector3( parseInt(posx),parseInt(posy),parseInt(posz) );
+
+                    dir.normalize();
+
+                    const origin = new THREE.Vector3(parseInt(posx),parseInt(posy),parseInt(posz));
+                    const length = 4;
+                    const hex = 0xffff00;
+
+                    const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+                    scene.add( arrowHelper );
+                    */
+                
+                    renderer.render(scene,camera)
+                } catch {
                 }
-                const mesh = new THREE.Mesh(box,material)
-                mesh.quaternion.setFromRotationMatrix( matrix );
-                //mesh.scale.set( parseInt(sizex), parseInt(sizey), parseInt(sizez) );
-                mesh.position.set(parseInt(posx), parseInt(posy), parseInt(posz))
-                
-                boxes[object.getAttribute('referent')] = [box,[parseInt(posx),parseInt(posy),parseInt(posz)],mesh,matrix]
-
-                ids[mesh.uuid] = object.getAttribute('referent')
-                scene.add(mesh)
-                
-                console.log(mesh)
-
-                /*
-                const dir = new THREE.Vector3( parseInt(posx),parseInt(posy),parseInt(posz) );
-
-                dir.normalize();
-
-                const origin = new THREE.Vector3(parseInt(posx),parseInt(posy),parseInt(posz));
-                const length = 4;
-                const hex = 0xffff00;
-
-                const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
-                scene.add( arrowHelper );
-                */
-            
-                renderer.render(scene,camera)
             }
         }
     }
