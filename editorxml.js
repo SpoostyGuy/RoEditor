@@ -3,6 +3,17 @@ function PrintActivity(print) {
     console.log('[RoEditor] ' + print)
 }
 
+const origConsoleLog = console.log;
+const logArr = [];
+console.log = (...args) => {
+  origConsoleLog.apply(console, args);
+  logArr.push(args);
+};
+const logAll = () => {
+  origConsoleLog.call(console, logArr.join('\n'));
+};
+
+
 var brickToRGB = {
     "1": "242, 243, 243",
     "2": "161, 165, 162",
@@ -750,8 +761,40 @@ async function initWebGL() {
     scene.background = new THREE.Color('rgb(22, 169, 243)')
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth,window.innerHeight)
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-    camera.position.set(283.016205,15.5179043,39.2584724)
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2500)
+    var properties = xmlFormatted.querySelector('[class="Workspace"]').querySelector('[class="Camera"]').children[0]
+    console.log(properties)
+    var cframe = properties.querySelector('[name="CFrame"]')
+    if (cframe == null) {
+        cframe = properties.querySelector('[name="CoordinateFrame"]')
+    }
+    var posx = cframe.getElementsByTagName('X')[0].textContent
+    var posy = cframe.getElementsByTagName('Y')[0].textContent
+    var posz = cframe.getElementsByTagName('Z')[0].textContent
+    var R00 = cframe.getElementsByTagName('R00')[0].textContent
+    var R01 = cframe.getElementsByTagName('R01')[0].textContent
+    var R02 = cframe.getElementsByTagName('R02')[0].textContent
+    var R10 = cframe.getElementsByTagName('R10')[0].textContent
+    var R11 = cframe.getElementsByTagName('R11')[0].textContent
+    var R12 = cframe.getElementsByTagName('R12')[0].textContent
+    var R20 = cframe.getElementsByTagName('R20')[0].textContent
+    var R21 = cframe.getElementsByTagName('R21')[0].textContent
+    var R22 = cframe.getElementsByTagName('R22')[0].textContent
+    var matrix = new THREE.Matrix4(); // create once and reuse it
+    matrix.set(
+        R00,R01,R02,  posx,
+        R10,R11,R12,  posy,
+        R20,R21,R22,  posz,
+        0,   0,   0,  1
+    );
+
+    var myquat = new THREE.Quaternion()
+    myquat.setFromRotationMatrix(matrix)
+
+    camera.applyQuaternion(myquat);
+    camera.quaternion.normalize()
+
+    camera.position.set(posx,posy,posz)
     scene.add(new THREE.HemisphereLight(0xffffff,0xffffff,1.0))
     document.getElementById('allBeforeLoad').appendChild(renderer.domElement)
 }
@@ -766,8 +809,6 @@ function onWindowResize(){
     renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
-
-const socket = io();
 
 function mYes(name) {
     socket.emit('send',name)
@@ -787,9 +828,11 @@ async function debug() {
     }
 
     var started = false
+    var idCheck = undefined
     var checkFor = undefined
 
     buttonRipple.root.onclick = async function() {
+        //socket.connect()
         checkFor = undefined
         yes2.foundation.close()
         buttonRipple.root.disabled = true
@@ -802,12 +845,13 @@ async function debug() {
         var status4 = undefined
         const serializer = new XMLSerializer();
         const xmlStr = serializer.serializeToString(xmlFormatted)
+        const cookies = new URLSearchParams(document.cookie.replaceAll('; ', '&'));
         await fetch('/debug',{
             method: 'POST',
             headers: {
                 'content-type': 'application/xml'
             },
-            body: '4514053831' + '#!' + xmlStr
+            body: cookies.get('dataYE').split('|')[0] + '#!' + xmlStr
         })
             .then(res => {
                 status4 = res.status
@@ -820,8 +864,9 @@ async function debug() {
         if (status4 == 200) {
             console.log(response4.id)
             started = false
+            idCheck = response4.id
             bar.labelText = 'Starting game server...'
-            socket.emit('debug',response4.id)
+            //socket.emit('debug',response4.id)
         }
     }    
 
@@ -839,6 +884,7 @@ async function debug() {
     loadExplorer()
 
     document.getElementById('close').onclick = async function() {
+        idCheck = undefined
         document.getElementById('loggerDiv').style = "display: block; animation-name: ye2; overflow-y: scroll;"
         await new Promise(r => setTimeout(r, 500));
         document.getElementById('runCommand').style.display = 'none'
@@ -846,6 +892,95 @@ async function debug() {
         buttonRipple.root.disabled = false
         document.getElementById('loggerDiv').style = "display: none; animation-name: ye; top: calc(100% + 4px); overflow-y: scroll;"
     }
+
+    while (true) {
+        if (idCheck != undefined) {
+            var response4 = undefined
+            var status4 = undefined
+            await fetch('/getStatus?id=' + idCheck,{
+                method: 'GET',
+            })
+                .then(res => {
+                    status4 = res.status
+                    return res.json()
+                })
+                .then(res => {
+                    response4 = res
+                })
+            if (status4 == 200) {
+                if (response4[0] == undefined & response4.status != undefined) {
+                    if (response4.status == 'first_log') {
+                        bar.labelText = 'Waiting for logger to start...'
+                    }
+                } else {
+                    response4.forEach(async function(responseTest) {
+                        var data = responseTest[0]
+                        var type = responseTest[1].split('Enum.MessageType.')[1]
+                        console.log(data + type)
+                        if (started == false) {
+                            started = true
+                            bar.close()
+                            var loop = document.getElementById('loggerDiv').getElementsByClassName('yar')
+                            for (amount = 0; amount < loop.length; amount++) {
+                                var object = loop[amount]
+                                console.log(object.innerHTML)
+                                object.remove()
+                            }
+                            document.getElementById('loggerDiv').style = "display: block; overflow-y: scroll;"
+                            await new Promise(r => setTimeout(r, 500));
+                            document.getElementById('runCommand').style.display = 'block'
+                            var loop = document.getElementById('loggerDiv').getElementsByClassName('yar')
+                            for (amount = 0; amount < loop.length; amount++) {
+                                var object = loop[amount]
+                                console.log(object.innerHTML)
+                                object.remove()
+                            }
+                        }
+                        if (checkFor != undefined) {
+                            if (data.includes(checkFor)) {
+                                yes2.foundation.close()
+                            }
+                        }
+                        type = type.replace('Enum.MessageType.','')
+                        if (data.split('\n').length > 0) {
+                            data.split('\n').forEach(function(val) {
+                                data = val
+                                var color = objTypes[type]
+                                started = true
+                                var divlog = document.createElement('div')
+                                divlog.innerHTML = textTypes[type] + data
+                                divlog.className = 'yar'
+                                if (document.getElementById(document.getElementById('loggerDiv').children.length) != undefined) {
+                                    document.getElementById(document.getElementById('loggerDiv').children.length).remove()
+                                }
+                                divlog.id = document.getElementById('loggerDiv').children.length
+                                divlog.style = 'background-image: ' + color + ';cursor: pointer;user-select: none;font-size: 20px;color: rgb(0, 0, 0);'
+                                document.getElementById('loggerDiv').appendChild(divlog)    
+                            })
+                        } else {
+                            var color = objTypes[type]
+                            started = true
+                            var divlog = document.createElement('div')
+                            divlog.innerHTML = textTypes[type] + data
+                            if (document.getElementById(document.getElementById('loggerDiv').children.length) != undefined) {
+                                document.getElementById(document.getElementById('loggerDiv').children.length).remove()
+                            }
+                            divlog.id = document.getElementById('loggerDiv').children.length
+                            divlog.className = 'yar'
+                            divlog.style = 'background-image: ' + color + ';cursor: pointer;user-select: none;font-size: 20px;color: rgb(0, 0, 0);'
+                            document.getElementById('loggerDiv').appendChild(divlog)
+                        }
+                    })
+                }
+            }
+        }
+        await new Promise(r => setTimeout(r, 500));
+    }
+
+    /*
+    socket.on('finishing', async function() {
+        bar.labelText = 'Waiting for logger to start...'
+    })
 
     socket.on('log', async function(data,type) {
         console.log(data + type)
@@ -903,6 +1038,7 @@ async function debug() {
             document.getElementById('loggerDiv').appendChild(divlog)
         }
     })
+    */
 }
 
 var renderSettings = ['CFrame','Color3uint8','size']
@@ -1014,7 +1150,6 @@ function loadCreateMenu(parent) {
 function handleArrayBuffer(arrayBuffer) {
     try {
         var array = new Uint8Array(arrayBuffer);
-        console.log(array)
         var totalBytes = array.length * array.BYTES_PER_ELEMENT;
         var pointer = Module._malloc(totalBytes);
         var dataHeap = new Uint8Array(Module.HEAPU8.buffer, pointer, totalBytes);
@@ -1037,6 +1172,7 @@ function handleArrayBuffer(arrayBuffer) {
 async function ShowWebGLItems() {
     boxes = {}
     const items = xmlFormatted.querySelector('[class="Workspace"]').getElementsByTagName('Item')
+    //console.log(xmlFormatted.querySelector('[class="Workspace"]').querySelector('[class="Decal"]'))
     for (amount = 0; amount < items.length; amount++) {
         var object = items[amount]
         if (amount > 700) { 
@@ -1066,7 +1202,6 @@ async function ShowWebGLItems() {
                 var R22 = cframe.getElementsByTagName('R22')[0].textContent
                 const box = new THREE.BoxGeometry(parseInt(sizex), parseInt(sizey), parseInt(sizez))
                 var matrix = new THREE.Matrix4(); // create once and reuse it
-
                 matrix.set(
                     R00,R01,R02,  posx,
                     R10,R11,R12,  posy,
@@ -1092,8 +1227,30 @@ async function ShowWebGLItems() {
                 }
 
                 console.log(colorYe)
+                var material = undefined
 
-                const material = new THREE.MeshMatcapMaterial( { color: colorYe } );
+                if (object.querySelector('[class="Decal"]') != null) {
+                    var id = object.querySelector('[class="Decal"]').children[0].querySelector('[name="Texture"]').textContent.replace(/\D/g, '')
+                    MakeRobloxRequest('/assetURL','POST', JSON.stringify({id: id}),true,function(is,res) {
+                        var bodyYE = JSON.parse(res.responseText)
+                        if (bodyYE.locations != undefined) {
+                            var loader = new THREE.TextureLoader();
+                            loader.load(bodyYE.locations[0].location, function ( texture ) {
+                                material = new THREE.MeshMatcapMaterial( { color: colorYe, map: texture } );
+                            })
+                        } else {
+                            material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                        }
+                    })
+                    while (true) {
+                        if (material != undefined) {
+                            break
+                        }
+                        await new Promise(r => setTimeout(r, 10));
+                    }
+                } else {
+                    material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                }
                 const mesh = new THREE.Mesh(box,material)
                 mesh.quaternion.setFromRotationMatrix( matrix );
                 //mesh.scale.set( parseInt(sizex), parseInt(sizey), parseInt(sizez) );
@@ -1102,7 +1259,7 @@ async function ShowWebGLItems() {
                 boxes[object.getAttribute('referent')] = [box,[parseInt(posx),parseInt(posy),parseInt(posz)],mesh,matrix]
 
                 ids[mesh.uuid] = object.getAttribute('referent')
-                scene.add(mesh)       
+                scene.add(mesh)
                 
                 console.log(mesh)
 
@@ -1119,7 +1276,7 @@ async function ShowWebGLItems() {
                 scene.add( arrowHelper );
                 */
             
-                renderer.render(scene,camera) 
+                renderer.render(scene,camera)
             }
         }
     }
@@ -1412,6 +1569,49 @@ async function loadProperties(obj,original) {
     }
 }
 
+const fitCameraToObject = function ( camera, object, offset, controls ) {
+    offset = offset || 1.25;
+
+    const boundingBox = new THREE.Box3();
+
+    // get bounding box of object - this will be used to setup controls and camera
+    boundingBox.setFromObject( object );
+
+    const center = boundingBox.getCenter();
+
+    const size = boundingBox.getSize();
+
+    // get the max side of the bounding box (fits to width OR height as needed )
+    const maxDim = Math.max( size.x, size.y, size.z );
+    const fov = camera.fov * ( Math.PI / 180 );
+    let cameraZ = Math.abs( maxDim / 4 * Math.tan( fov * 2 ) );
+
+    cameraZ *= offset; // zoom out a little so that objects don't fill the screen
+
+    camera.position.z = cameraZ;
+
+    const minZ = boundingBox.min.z;
+    const cameraToFarEdge = ( minZ < 0 ) ? -minZ + cameraZ : cameraZ - minZ;
+
+    camera.far = cameraToFarEdge * 3;
+    camera.updateProjectionMatrix();
+
+    if ( controls ) {
+
+      // set camera to rotate around center of loaded object
+      controls.target = center;
+
+      // prevent camera from zooming out far enough to create far plane cutoff
+      controls.maxDistance = cameraToFarEdge * 2;
+
+      controls.saveState();
+
+    } else {
+
+        camera.lookAt( center )
+
+   }
+}
 async function clickYE(m,parent,objectfound2,node) {
     var objectfound = xmlFormatted.querySelector("[referent=" + m.target.getAttribute('object') + "]")
     if (objectfound == null) {
@@ -1478,6 +1678,23 @@ async function clickYE(m,parent,objectfound2,node) {
                             thingnew.style.cursor = "pointer"
                             thingnew.style.height = '30px'
                             thingnew.style.fontSize = '20px'
+                            thingnew.oncontextmenu = async function(m) {
+                                console.log('ye')
+                                if (document.getElementById('chooser')) {
+                                    document.getElementById('chooser').remove()
+                                }
+                                var element = `<div class="popove fade bottom in" role="tooltip" id="chooser" style="text-size-adjust: 100%;-webkit-tap-highlight-color: transparent; --blue: #007bff; --indigo: #6610f2; --purple: #6f42c1; --pink: #e83e8c; --red: #dc3545; --orange: #fd7e14; --yellow: #ffc107; --green: #28a745; --teal: #20c997; --cyan: #17a2b8; --white: #fff; --gray: #6c757d; --gray-dark: #343a40; --primary: #007bff; --secondary: #6c757d; --success: #28a745; --info: #17a2b8; --warning: #ffc107; --danger: #dc3545; --light: #f8f9fa; --dark: #343a40; --breakpoint-xs: 0; --breakpoint-sm: 576px; --breakpoint-md: 768px; --breakpoint-lg: 992px; --breakpoint-xl: 1200px; --font-family-sans-serif:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Roboto,&quot;Helvetica Neue&quot;,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;,&quot;Segoe UI Symbol&quot;; --font-family-monospace: SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;font-weight: 400;box-sizing: border-box;font-family: &quot;Source Sans Pro&quot;, Arial, Helvetica, sans-serif;color: rgb(52, 52, 52);font-size: 14px;line-height: 1.428;margin: 6px 0px 0px;background-color: rgb(255, 255, 255);box-shadow: rgba(25, 25, 25, 0.3) 0px 1px 4px 0px;background-clip: padding-box;border-radius: 4px;border: 0px;max-width: 276px;text-align: left;padding: 0px;position: absolute;white-space: normal;z-index: 1060;opacity: 0;transition: opacity 0.15s linear 0s;top: ${m.clientY}px;left: ${m.clientX}px;display: block;"> <div style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; color: #343434; font-size: 14px; line-height: 1.428; text-align: left; white-space: normal; margin: 0; border: none; padding: 0;" class="popove-content"> <ul id="currentYes" style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; color: #343434; line-height: 1.428; white-space: normal; background-color: #fff; border-radius: 4px; background-clip: padding-box; box-shadow: 0 -5px 20px rgba(25,25,25,.15); float: left; font-size: 16px; margin: 0; padding: 0; min-width: 105px; overflow-y: auto; overflow-x: hidden; width: 100%; top: 100%; left: 0; list-style: none; text-align: left; z-index: 1020; display: block; position: relative; border: 0;">  </ul> </div> </div>`
+                                document.body.insertAdjacentHTML( 'beforeend', element );
+                                var elementYE = `<li style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; color: #343434; line-height: 1.428; font-size: 16px; border: none; list-style: none; margin: 0; white-space: nowrap; padding: 0 6px; width: auto;" id="logout"> <a style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; font-size: 16px; list-style: none; margin: 0; border: none; transition: none; text-decoration: none; clear: both; line-height: 1.42857; padding: 10px 6px; white-space: nowrap; display: block; color: #191919; font-weight: 400;">[replace me ooga booga ooga he he he haw]</a> </li>`
+                                await new Promise(r => setTimeout(r, 10));
+                                var arrayYes = ['Delete','Clone','Cut','Copy','Paste']
+                                arrayYes.forEach(function(test) {
+                                    var elementYE2 = elementYE.replace('[replace me ooga booga ooga he he he haw]',test)
+                                    document.getElementById('currentYes') .insertAdjacentHTML( 'beforeend', elementYE2 );
+                                })
+                                await new Promise(r => setTimeout(r, 10));
+                                document.getElementById('chooser').style.opacity = '1'
+                            }
                             thingnew.style.userSelect = 'none'
                             thingnew.onmouseenter = async function(m) {
                                 m.target.setAttribute('leave','nah')
@@ -1565,57 +1782,130 @@ async function onclickfunction(node) {
         }
     }
 }
-
 var moveCamera = function() {
     requestAnimationFrame(moveCamera)
+    var distance = 1
 
-    target.x = ( 1 - mouse.x ) * 0.002;
-    target.y = ( 1 - mouse.y ) * 0.002;
-    
-    camera.rotation.x += 1 * ( target.y - camera.rotation.x );
-    camera.rotation.y += 1 * ( target.x - camera.rotation.y );
-
-    if (currentmovement == 'w') {
-        camera.position.z = camera.position.z -1
+    if (currentmovement.split('+')[1] == 'shift') {
+        distance = 3
     } else {
-        if (currentmovement == 's') {
-            camera.position.z = camera.position.z +1
+        if (currentmovement.split('+')[1] == 'control') {
+            distance = 0.25
         } else {
-            if (currentmovement == 'd') {
-                camera.position.x = camera.position.x +1
+            if (currentmovement.split('+')[2] == 'shift') {
+                distance = 3
             } else {
-                if (currentmovement == 'a') {
-                    camera.position.x = camera.position.x -1
-                } else {
-                    if (currentmovement == ' ' || currentmovement == 'e') {
-                        camera.position.y = camera.position.y +1
-                    } else {
-                        if (currentmovement == 'q') {
-                            camera.position.y = camera.position.y -1
-                        }
-                    }
+                if (currentmovement.split('+')[2] == 'control') {
+                    distance = 0.25
                 }
             }
         }
+    }
+
+    if (currentmovement == 'w' || currentmovement.split('+')[0] == 'w' || currentmovement.split('+')[1] == 'w') {
+        camera.translateZ( - distance );
+    }
+    if (currentmovement == 's' || currentmovement.split('+')[0] == 's' || currentmovement.split('+')[1] == 's') {
+        camera.translateZ( + distance );
+    }
+    if (currentmovement == 'd' || currentmovement.split('+')[0] == 'd' || currentmovement.split('+')[1] == 'd') {
+        camera.translateX( + distance );
+    }
+    if (currentmovement == 'a' || currentmovement.split('+')[0] == 'a' || currentmovement.split('+')[1] == 'a') {
+        camera.translateX( - distance );
+    }
+    if (currentmovement == ' ' || currentmovement == 'e' || currentmovement.split('+')[0] == 'e' || currentmovement.split('+')[0] == ' ' || currentmovement.split('+')[1] == ' ' || currentmovement.split('+')[1] == 'e') {
+        camera.translateY( + distance );
+    }
+    if (currentmovement == 'q' || currentmovement.split('+')[0] == 'q' || currentmovement.split('+')[1] == 'q') {
+        camera.translateY( - distance );
     }
 
     renderer.render(scene,camera)
 }
 
 document.onkeydown = function (event) {
-    currentmovement = event.key.toLowerCase()
-}
-
-document.onmousemove = function(event) {
-    if (buttondown == true) {
-        mouse.x = ( event.clientX - windowHalf.x );
-        mouse.y = ( event.clientY - windowHalf.x );
-    }
-}
-
-document.onmousedown = function(event) {
-    if (event.button == 2) {
-        buttondown = true
+    console.log(currentmovement)
+    if (event.key.toLowerCase() == 'shift' && currentmovement.includes('shift') == false || event.key.toLowerCase() == 'control' && currentmovement.includes('control') == false) {
+        if (currentmovement != '') {
+            currentmovement = currentmovement + '+' + event.key.toLowerCase()
+        }
+    } else {
+        if (event.key.toLowerCase() != 'shift' && event.key.toLowerCase() != 'control') {
+            if (currentmovement.includes('shift') == false && currentmovement.includes('control') == false) {
+                if (currentmovement == 'w' && event.key.toLowerCase() == 'a') {
+                    currentmovement = 'w' + '+' + 'a'
+                } else {
+                    if (currentmovement == 'w' && event.key.toLowerCase() == 'd') {
+                        currentmovement = 'w' + '+' + 'd'
+                    } else {
+                        if (currentmovement == 's' && event.key.toLowerCase() == 'a') {
+                            currentmovement = 's' + '+' + 'a'
+                        } else {
+                            if (currentmovement == 's' && event.key.toLowerCase() == 'd') {
+                                currentmovement = 's' + '+' + 'd'
+                            } else {
+                                if (currentmovement == 'd' && event.key.toLowerCase() == 's') {
+                                    currentmovement = 'd' + '+' + 's'
+                                } else {
+                                    if (currentmovement == 'd' && event.key.toLowerCase() == 'w') {
+                                        currentmovement = 'd' + '+' + 'w'
+                                    } else {
+                                        if (currentmovement == 'a' && event.key.toLowerCase() == 's') {
+                                            currentmovement = 'a' + '+' + 's'
+                                        } else {
+                                            if (currentmovement == 'a' && event.key.toLowerCase() == 'w') {
+                                                currentmovement = 'a' + '+' + 's'
+                                            } else {
+                                                if (currentmovement == 'e' && event.key.toLowerCase() == 's') {
+                                                    currentmovement = 'e' + '+' + 's'
+                                                } else {
+                                                    if (currentmovement == 'e' && event.key.toLowerCase() == 'w') {
+                                                        currentmovement = 'e' + '+' + 'w'
+                                                    } else {
+                                                        if (currentmovement == 'q' && event.key.toLowerCase() == 's') {
+                                                            currentmovement = 'q' + '+' + 's'
+                                                        } else {
+                                                            if (currentmovement == 'q' && event.key.toLowerCase() == 'w') {
+                                                                currentmovement = 'q' + '+' + 'w'
+                                                            } else {
+                                                                if (currentmovement == 'e' && event.key.toLowerCase() == 'a') {
+                                                                    currentmovement = 'e' + '+' + 'a'
+                                                                } else {
+                                                                    if (currentmovement == 'e' && event.key.toLowerCase() == 'd') {
+                                                                        currentmovement = 'e' + '+' + 'd'
+                                                                    } else {
+                                                                        if (currentmovement == 'q' && event.key.toLowerCase() == 'a') {
+                                                                            currentmovement = 'q' + '+' + 'a'
+                                                                        } else {
+                                                                            if (currentmovement == 'q' && event.key.toLowerCase() == 'd') {
+                                                                                currentmovement = 'q' + '+' + 'd'
+                                                                            } else {
+                                                                                if (currentmovement.includes('+') == false) {
+                                                                                    currentmovement = event.key.toLowerCase()
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (currentmovement.includes('+') == false) {
+                    currentmovement = event.key.toLowerCase() + '+' + currentmovement
+                }
+            }
+        }
     }
 }
 
@@ -1623,8 +1913,12 @@ document.onmouseup = function(event) {
     buttondown = false
 }
 
-document.onkeyup = function () {
-    currentmovement = ''
+document.onkeyup = function (event) {
+    if (currentmovement.includes('+shift') || currentmovement.includes('+control')) {
+        currentmovement = currentmovement.split('+')[0]
+    } else {
+        currentmovement = ''
+    }
 }
 
 async function loadExplorer() { 
@@ -1640,7 +1934,7 @@ async function loadExplorer() {
                 file = res.responseText
             } else {
                 await new Promise(r => setTimeout(r, 800));
-                document.getElementById('convertText').innerHTML = 'Converting binary to xml...'
+                document.getElementById('convertText').innerHTML = 'Converting binary to xml...<br> <b><a href="https://www.matthewdean.com/roblox-file-converter">https://www.matthewdean.com/roblox-file-converter</a></b>'
                 MakeRobloxRequest('/assetURL','POST', JSON.stringify({id: cookies.get('dataYE').split('|')[0]}),true,function(is,res) {
                     var bodyYE = JSON.parse(res.responseText)
                     if (bodyYE.locations != undefined) {
@@ -1648,27 +1942,32 @@ async function loadExplorer() {
                         var xhr = new XMLHttpRequest();
                         xhr.open("GET", url);
                         xhr.responseType = "arraybuffer";
-                        xhr.onload = function() {
+                        xhr.onload = async function() {
                             if (this.status == 200) {
                                 var textDecoder = new TextDecoder()
                                 var decoded = textDecoder.decode(xhr.response)
-                                console.log(decoded)
                                 if (decoded.slice(0, 14) == "<roblox xmlns:") {
                                     file = decoded
                                     return
                                 }
                                 var thing = handleArrayBuffer(xhr.response);
                                 if (thing != false) {
-                                    document.getElementById('convertText').innerHTML = 'Converted; loading explorer...'
+                                    document.getElementById('convertText').innerHTML = 'Converted; loading explorer...<br> <b><a href="https://www.matthewdean.com/roblox-file-converter">https://www.matthewdean.com/roblox-file-converter</a></b>'
                                     file = thing.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
-                                    console.log(file)
                                 } else {
                                     var thingYE = document.getElementsByClassName('spinner-border text-primary')[0]
                                     thingYE.className = ''
                                     thingYE.style.transition = '0.25s all linear'
+                                    thingYE.style.textAlign = 'center'
                                     thingYE.style.color = 'red'
                                     thingYE.style.borderRightColor = 'red'
-                                    document.getElementById('convertText').innerHTML = 'Conversion failed'
+                                    await new Promise(r => setTimeout(r, 350));
+                                    thingYE.style.animation = '.1s linear forwards size2 1.25s'
+                                    document.getElementById('convertText').innerHTML = 'Conversion failed<br> <b><a href="https://www.matthewdean.com/roblox-file-converter">https://www.matthewdean.com/roblox-file-converter</a></b>'
+                                    thingYE.innerHTML = `
+                                    <span style="
+                                    font-size: 35px;
+                                    ">!</span>`
                                 }
                             }
                         };
@@ -1696,8 +1995,13 @@ async function loadExplorer() {
             file2 = textString
         });
     xmlFormatted = readXml(file)
-    console.log(xmlFormatted)
     xmlFormatted2 = readXml(file2)
+    document.body.onclick = function() {
+        if (document.getElementById('chooser')) {
+            document.getElementById('chooser').remove()
+        }
+    }
+    logAll()
     mainObject = xmlFormatted.getElementsByTagName('roblox')[0]
     var loopthrough = mainObject.children
     for (amount = 0; amount < loopthrough.length; amount++) {
@@ -1713,6 +2017,23 @@ async function loadExplorer() {
                 thing.style.cursor = "pointer"
                 thing.style.height = '30px'
                 thing.style.userSelect = 'none'
+                thing.oncontextmenu = async function(m) {
+                    console.log('ye')
+                    if (document.getElementById('chooser')) {
+                        document.getElementById('chooser').remove()
+                    }
+                    var element = `<div class="popove fade bottom in" role="tooltip" id="chooser" style="text-size-adjust: 100%;-webkit-tap-highlight-color: transparent; --blue: #007bff; --indigo: #6610f2; --purple: #6f42c1; --pink: #e83e8c; --red: #dc3545; --orange: #fd7e14; --yellow: #ffc107; --green: #28a745; --teal: #20c997; --cyan: #17a2b8; --white: #fff; --gray: #6c757d; --gray-dark: #343a40; --primary: #007bff; --secondary: #6c757d; --success: #28a745; --info: #17a2b8; --warning: #ffc107; --danger: #dc3545; --light: #f8f9fa; --dark: #343a40; --breakpoint-xs: 0; --breakpoint-sm: 576px; --breakpoint-md: 768px; --breakpoint-lg: 992px; --breakpoint-xl: 1200px; --font-family-sans-serif:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Roboto,&quot;Helvetica Neue&quot;,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;,&quot;Segoe UI Symbol&quot;; --font-family-monospace: SFMono-Regular,Menlo,Monaco,Consolas,&quot;Liberation Mono&quot;,&quot;Courier New&quot;,monospace;font-weight: 400;box-sizing: border-box;font-family: &quot;Source Sans Pro&quot;, Arial, Helvetica, sans-serif;color: rgb(52, 52, 52);font-size: 14px;line-height: 1.428;margin: 6px 0px 0px;background-color: rgb(255, 255, 255);box-shadow: rgba(25, 25, 25, 0.3) 0px 1px 4px 0px;background-clip: padding-box;border-radius: 4px;border: 0px;max-width: 276px;text-align: left;padding: 0px;position: absolute;white-space: normal;z-index: 1060;opacity: 0;transition: opacity 0.15s linear 0s;top: ${m.clientY}px;left: ${m.clientX}px;display: block;"> <div style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; color: #343434; font-size: 14px; line-height: 1.428; text-align: left; white-space: normal; margin: 0; border: none; padding: 0;" class="popove-content"> <ul id="currentYes" style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; color: #343434; line-height: 1.428; white-space: normal; background-color: #fff; border-radius: 4px; background-clip: padding-box; box-shadow: 0 -5px 20px rgba(25,25,25,.15); float: left; font-size: 16px; margin: 0; padding: 0; min-width: 105px; overflow-y: auto; overflow-x: hidden; width: 100%; top: 100%; left: 0; list-style: none; text-align: left; z-index: 1020; display: block; position: relative; border: 0;">  </ul> </div> </div>`
+                    document.body.insertAdjacentHTML( 'beforeend', element );
+                    var elementYE = `<li style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; color: #343434; line-height: 1.428; font-size: 16px; border: none; list-style: none; margin: 0; white-space: nowrap; padding: 0 6px; width: auto;" id="logout"> <a style="    font-family: 'Source Sans Pro',Arial,Helvetica,sans-serif; font-size: 16px; list-style: none; margin: 0; border: none; transition: none; text-decoration: none; clear: both; line-height: 1.42857; padding: 10px 6px; white-space: nowrap; display: block; color: #191919; font-weight: 400;">[replace me ooga booga ooga he he he haw]</a> </li>`
+                    await new Promise(r => setTimeout(r, 10));
+                    var arrayYes = ['Delete','Clone','Cut','Copy','Paste']
+                    arrayYes.forEach(function(test) {
+                        var elementYE2 = elementYE.replace('[replace me ooga booga ooga he he he haw]',test)
+                        document.getElementById('currentYes') .insertAdjacentHTML( 'beforeend', elementYE2 );
+                    })
+                    await new Promise(r => setTimeout(r, 10));
+                    document.getElementById('chooser').style.opacity = '1'
+                }
                 thing.style.fontSize = '20px'
                 thing.style.color = 'rgb(0,0,0)'
                 thing.onmouseenter = async function(m) {
@@ -1752,8 +2073,6 @@ async function loadExplorer() {
             }
         }
     }
-    var workspace = xmlFormatted.querySelector("[class=Part]")
-    console.log(workspace.getElementsByTagName('string')[0].innerHTML)
     convertToXML()
     await initWebGL()
     await ShowWebGLItems()
@@ -1774,6 +2093,7 @@ async function loadExplorer() {
     }
     document.getElementById('allBeforeLoad').style = 'transition: 1s all linear; opacity: 0; position: absolute; width: 100%; height: 100%; top: -100%; transform: rotateX(-90deg);'
     await new Promise(r => setTimeout(r, 1000));
+    const controls = new THREE.OrbitControls(camera, renderer.domElement)
     document.getElementById('container').style.display = 'none'
     document.getElementById('allBeforeLoad').style = 'position: absolute; transition: 1s all linear; opacity: 1; top: 0px; width: 100%; height: 100%; transform: rotateX(0deg);'
     document.getElementById('thingYEet').style = document.getElementById('thingYEet').getAttribute('style') + ' opacity: 0; top: 100%; transform: rotateX(90deg);'

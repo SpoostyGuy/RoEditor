@@ -1,19 +1,18 @@
 
 const express = require("express")
 var http = require('http')
-var socketIO = require('socket.io')
 const app = express()
 var server = http.createServer(app)
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
-var io = new socketIO.Server(server)
 const request = require('request')
 const cors = require("cors")
-var querystring = require('querystring');
 app.use(cors({
     origin: '*',
     credentials: true
 }));
+var fs = require('fs')
+var loginCookie = JSON.parse(fs.readFileSync(__dirname + '/cred.json').toString((('utf8')))).cookie
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
@@ -430,6 +429,239 @@ app.get('/search',function(req,res4) {
 })
 */
 
+var logTableForId = {}
+var idStatus = {}
+var jobIds = {}
+var idLastTime = {}
+var beforeLogYE = {}
+
+app.get('/getStatus',async function(req,res) {
+    if (req.query.id == undefined) {
+        return res.status(200).send('no')
+    }
+    if (idsYE[req.query.id] == undefined) {
+        return res.status(200).send('no')
+    }
+    if (req.cookies['ROBLOSECURITY'] == undefined) {
+        return res.status(400).send({'nope': 'no means no'})
+    }
+    var cookie = req.cookies['ROBLOSECURITY']
+    if (idStatus[req.query.id] == undefined || idStatus[req.query.id] == 'game_server') {
+        var response = undefined
+        RobloxRequest2('https://gamejoin.roblox.com/v1/join-game', 'POST', cookie, async function(err2,res4,body2) {
+            response = body2
+        },false,undefined,JSON.stringify({placeId: idsYE[req.query.id],isPlayTogetherGame: false}))
+        while (true) {
+            if (response != undefined) {
+                break
+            }
+            await new Promise(r => setTimeout(r, 10));
+        }
+        response = JSON.parse(response)
+        if (response.joinScript != null) {
+            console.log('first_log')
+            jobIds[req.query.id] = response.jobId
+            console.log(response.jobId)
+            /*
+            request.get('http://ip-api.com/json/' + response.joinScript.MachineAddress,function(err,res,body) {
+                var body = JSON.parse(body)
+                console.log('Region of server: ' + body.regionName)
+            })
+            */
+            idStatus[req.query.id] = 'first_log'
+            return res.status(200).send({status: 'first_log'})
+        } else {
+            idStatus[req.query.id] = 'game_server'
+            return res.status(200).send({status: 'game_server'})
+        }
+    } else {
+        if (idStatus[req.query.id] == 'first_log') {
+            var maximum = 100
+            var current = 1
+            var difference = 1500
+            if (idLastTime[req.query.id] == undefined) {
+                idLastTime[req.query.id] = 4
+            }
+            var num = idLastTime[req.query.id]
+            console.log(num)
+            console.log(((new Date().getTime())-num))
+            var placeID = idsYE[req.query.id]
+            var response = undefined
+            RobloxRequest2('https://gamejoin.roblox.com/v1/join-game-instance', 'POST', cookie, async function(err2,res4,body2) {
+                response = body2
+            },false,undefined,JSON.stringify({gameId: jobIds[req.query.id],placeId: idsYE[req.query.id],isPlayTogetherGame: false}))
+            while (true) {
+                if (response != undefined) {
+                    break
+                }
+                await new Promise(r => setTimeout(r, 200));
+            }
+            response = JSON.parse(response)
+            if (response.joinScript == null) {
+                console.log(jobIds[req.query.id] + ' has shut down, ending session')
+                delete idsYE[req.query.id]
+                return res.status(200).send([ ['--  END OF LOG  --','Enum.MessageType.MessageOutput'] ])
+            } else {
+                console.log(jobIds[req.query.id] + ' is running')
+            }
+
+            if (((new Date().getTime())-num)<difference) {
+                return res.status(200).send([])
+            }
+
+            var id = req.query.id
+            var beforeLog = []
+            var doneReq = false
+            var bodyData = ''
+            MakeDSRequest('https://gamepersistence.roblox.com/persistence/getV2?placeId=' + placeID + '&type=standard&scope=' + 'global','&qkeys[0].scope=global&qkeys[0].target=0&qkeys[0].key=DebugStatus',cookie,async function(err,res,body) {
+                try {
+                    bodyData = JSON.parse(body)
+                    body = JSON.parse(body)
+                } catch {
+                }
+                if (res.statusCode == 200) {
+                    if (body.data[0] != undefined) {
+                        var logs = undefined
+                        try {
+                            logs = Object.values(JSON.parse(JSON.parse(body.data[0].Value)))
+                        } catch {
+                        }
+                        console.log(logs)
+                        if (logs != undefined) {
+                            var date = new Date()
+                            date.setMilliseconds((Number(Object.keys(JSON.parse(JSON.parse(body.data[0].Value)))[0])+2))
+                            console.log(date)
+                            if (logs[0] != id) {
+                                doneReq = true
+                                return;
+                            }
+                            logs.shift()
+                            if (beforeLogYE[id] == undefined) {
+                                beforeLogYE[id] = []
+                            }
+                            var beforeLog = beforeLogYE[id]
+                            var array1 = logs
+                            var array2 = beforeLog
+                            const array2Sorted = array2.slice().sort();
+                            var compare = (array1.length === array2.length && array1.slice().sort().every(function(value, index) {
+                                return value === array2Sorted[index];
+                            }))
+                            if (compare == false) {
+                                var logsNotIncluded = []
+                                logs.forEach(function(resYEtst,index) {
+                                    var array3 = beforeLog[index] || []
+                                    var array4 = resYEtst
+                                    const array4Sorted = array4.slice().sort();
+                                    var compare4 = (array3.length === array4.length && array3.slice().sort().every(function(value, index) {
+                                        return value === array4Sorted[index];
+                                    }))
+                                    if (compare4 == false) {
+                                        logsNotIncluded.push(resYEtst)
+                                    }
+                                })
+                                beforeLogYE[id] = logs
+                                if (logsNotIncluded.length == 0) {
+                                    logsNotIncluded = true
+                                }
+                                /*
+                                logsNotIncluded.forEach(function(resYEtst) {
+                                    socketsWithId[id].emit('log',resYEtst[0],resYEtst[1].split('Enum.MessageType.')[1])
+                                })
+                                */
+                                doneReq = logsNotIncluded
+                            } else {
+                                console.log('4')
+                                doneReq = true
+                            }
+                        } else {
+                            console.log('3')
+                            doneReq = true
+                        }
+                        /*
+                        if (body.data[0].Value == id) {
+                            console.log('Unable to recieve logs')
+                            if (socketsWithId[id] != undefined) {
+                                idsNoWork[id] = true
+                                socketsWithId[id].emit('log','Unable to recieve logs','MessageError')
+                                await new Promise(r => setTimeout(r, 600));
+                                socketsWithId[id].emit('log','This is because the person running this site set the config incorrectly\nOr this is being hosted locally','MessageInfo')
+                            } else {
+                                idsNoWork[id] = false
+                            }
+                        } else {
+                            idsNoWork[id] = false
+                        }
+                        */
+                    } else {
+                        console.log('2')
+                        doneReq = true
+                        idsNoWork[id] = false
+                    }
+                } else {
+                    console.log('1')
+                    doneReq = true
+                }
+            },placeID)
+            while (true) {
+                if (doneReq != false) {
+                    break
+                }
+                await new Promise(r => setTimeout(r, 10));
+            }
+            console.log(doneReq)
+            console.log('done')
+            if (bodyData.errors != undefined) {
+                if (bodyData.errors[0].code == 8) {
+                    var gotReq = false
+                    console.log('Turning on api access...')
+                    request.get('https://apis.roblox.com/universes/v1/places/' + (idsYE[req.query.id]) + '/universe', async function(err4,res8,body16) {
+                        var id = JSON.parse(body16).universeId
+                        RobloxRequest2('https://roblox.com', 'GET', cookie, async function(err2,res4,body2) {
+                            var token = body2.split('<meta name="csrf-token" data-token="')[1].split('" />')[0]
+                            if (token != undefined) {
+                                request({
+                                    headers: {
+                                        'User-Agent': 'Roblox/WinInet',
+                                        'X-CSRF-TOKEN': token,
+                                        'Content-Type': 'application/json',
+                                        Cookie: `.ROBLOSECURITY=${cookie}; path=/; domain=.roblox.com; rbx-ip2=; RBXEventTrackerV2=CreateDate=8/3/2022 9:41:35 AM&rbxid=&browserid=142191137782; GuestData=UserID=-725336160; _gcl_au=1.1.1743709023.1659537699; RBXSource=rbx_acquisition_time=8/3/2022 9:41:45 AM&rbx_acquisition_referrer=https://www.roblox.com/login?returnUrl=https%3A%2F%2Fwww.roblox.com%2Fgames%2F9203864304%2Fraise-a-floppa%23%21%2Fgame-instances&rbx_medium=Direct&rbx_source=www.roblox.com&rbx_campaign=&rbx_adgroup=&rbx_keyword=&rbx_matchtype=&rbx_send_info=0`,
+                                    },
+                                    url: 'https://develop.roblox.com/v2/universes/' + id + '/configuration',
+                                    body: JSON.stringify({
+                                        "studioAccessToApisAllowed": true
+                                    }),
+                                    method: 'PATCH'
+                                }, function(_,res20,body8) {
+                                    console.log(body8)
+                                    console.log(res20.statusCode)
+                                    gotReq = true
+                                })
+                            } else {
+                                gotReq = true
+                            }
+                        },false,undefined)
+                    })
+                    while (true) {
+                        if (gotReq != undefined) {
+                            break
+                        }
+                        await new Promise(r => setTimeout(r, 10));
+                    }
+                    console.log('Turned on api access')
+                }
+            }
+            idLastTime[req.query.id] = (new Date().getTime())
+            if (doneReq == true) {
+                return res.status(200).send([])
+            } else {
+                return res.status(200).send(doneReq)
+            }
+            console.log(doneReq)
+        }
+    }
+    return res.status(200).send({status: idStatus[req.query.id]})
+})
+
 app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(req,res) {
     if (req.body == undefined) {
         console.log('6')
@@ -452,7 +684,7 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
             console.log('2')
             return res.status(400).send({'nope': 'no means no'})
         }
-        var valid = validXml(req.body.split('#!')[1])
+        var valid = validXml(req.body.split('#!')[1],true)
         if (valid == false) {
             console.log('1')
             return res.status(400).send({'nope': 'no means no'})
@@ -469,6 +701,25 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
         idsYE[temp] = req.body.split('#!')[0]
         var luaScript = '\nlocal currentUrl = "' + currentUrl + '"\nlocal currentId = "' + id + '"\n' +  fs.readFileSync(__dirname + '/debugScript.lua').toString('utf8')
 
+        var string1 = `<Item class="Script" referent="RBX2">`
+
+        var string2 = `</ProtectedString>
+        </Properties>
+        </Item>`
+
+        /*
+        var len = (valid.split(string1).length/2)
+        for (let i = 0; i < len; i++) {
+            var part1 = valid.indexOf(string1)
+            console.log(part1)
+            var part2 = valid.indexOf(string2)
+            console.log(part2)
+            valid =
+                valid.substring(0, part1) +
+                valid.substring(part2 + '        '.length + part2.length);
+        }
+        */
+
         var baseScriptString = `
         <Item class="Script" referent="RBX2">
         <Properties>
@@ -476,7 +727,7 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
             <Content name="LinkedSource"><null></null></Content>
             <string name="Name">Debugger</string>
             <ProtectedString name="Source">
-            ${luaScript.replaceAll('    ','&#9;')}
+            ${luaScript}
             
             </ProtectedString>
         </Properties>
@@ -519,7 +770,7 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
         console.log('Uploading to roblox...')
 
         var file = valid
-        file = file.split(`</OptionalCoordinateFrame>`)[0] + '</OptionalCoordinateFrame>\n</Properties>' + baseScriptString + file.split(`</OptionalCoordinateFrame>`)[1].replace('</Properties>','')
+        file = file.split(`<Item class="Camera"`)[0] + baseScriptString + '\n<Item class="Camera"' + file.split(`<Item class="Camera"`)[1]
         file = file.replace('<bool name="HttpEnabled">false</bool>','<bool name="HttpEnabled">true</bool>')
         file = file.replace('<bool name="LoadStringEnabled">false</bool>','<bool name="LoadStringEnabled">true</bool>')
 
@@ -533,6 +784,8 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
                         console.log('Upload success!')
                         console.log('Starting game server')
                         res.status(200).send({id: id})
+                        // OLD DELAY WEBSOCKET VERSION; MOVED TO MUTLIREQUEST
+                        /*
                         var maxAttempts = 15
                         var currentAttemps = 0
                         while (true) {
@@ -551,40 +804,123 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
                                 break
                             }
                             if (response.joinScript != null) {
+                                request.get('http://ip-api.com/json/' + response.joinScript.MachineAddress,function(err,res,body) {
+                                    var body = JSON.parse(body)
+                                    console.log('Region of server: ' + body.regionName)
+                                    //<img class="lu-fs" height="136" id="lu_map" src="/
+                                })
                                 break
                             } else {
                                 currentAttemps = currentAttemps +1
                             }
                         }
                         console.log('Game server started')
-                        await new Promise(r => setTimeout(r, 2500));
+                        if (socketsWithId[id] != undefined) {
+                            socketsWithId[id].emit('finishing')
+                        }
+                        await new Promise(r => setTimeout(r, 4000));
+                        var maximum = 100
+                        var current = 1
                         var placeID = req.body.split('#!')[0]
+                        var beforeLog = []
 
-                        MakeDSRequest('https://gamepersistence.roblox.com/persistence/getV2?placeId=' + placeID + '&type=standard&scope=' + 'global','&qkeys[0].scope=global&qkeys[0].target=0&qkeys[0].key=DebugStatus',cookie,async function(err,res,body) {
-                            if (res.statusCode == 200) {
-                                body = JSON.parse(body)
-                                body.data[0].Value = body.data[0].Value.slice(1,(body.data[0].Value.length-1))
-                                if (body.data[0] != undefined) {
-                                    if (body.data[0].Value == id) {
-                                        console.log('Unable to recieve logs')
-                                        if (socketsWithId[id] != undefined) {
-                                            idsNoWork[id] = true
-                                            socketsWithId[id].emit('log','Unable to recieve logs','MessageError')
-                                            await new Promise(r => setTimeout(r, 600));
-                                            socketsWithId[id].emit('log','This is because the person running this site set the config incorrectly\nOr this is being hosted locally','MessageInfo')
+                        while (current < maximum) {
+                            var stopReq = false
+                            var doneReq = false
+                            if (current >= maximum) {
+                                break
+                            }
+                            MakeDSRequest('https://gamepersistence.roblox.com/persistence/getV2?placeId=' + placeID + '&type=standard&scope=' + 'global','&qkeys[0].scope=global&qkeys[0].target=0&qkeys[0].key=DebugStatus',cookie,async function(err,res,body) {
+                                if (socketsWithId[id] == undefined) {
+                                    stopReq = true
+                                    doneReq = true
+                                    console.log('client disconnected')
+                                    return
+                                }
+                                if (res.statusCode == 200) {
+                                    body = JSON.parse(body)
+                                    if (body.data[0] != undefined) {
+                                        var logs = undefined
+                                        try {
+                                            logs = Object.values(JSON.parse(JSON.parse(body.data[0].Value)))
+                                        } catch {
+                                        }
+                                        if (logs != undefined) {
+                                            var date = new Date()
+                                            date.setMilliseconds((Number(Object.keys(JSON.parse(JSON.parse(body.data[0].Value)))[0])+2))
+                                            console.log(date)
+                                            if (logs[0] != id) {
+                                                console.log(id)
+                                                console.log(logs[0])
+                                                var date = new Date().setMilliseconds((Number(Object.keys(JSON.parse(JSON.parse(body.data[0].Value)))[0])+2))
+                                                console.log(date)
+                                                doneReq = true
+                                                return;
+                                            }
+                                            logs.shift()
+                                            var array1 = logs
+                                            var array2 = beforeLog
+                                            const array2Sorted = array2.slice().sort();
+                                            var compare = (array1.length === array2.length && array1.slice().sort().every(function(value, index) {
+                                                return value === array2Sorted[index];
+                                            }))
+                                            if (compare == false) {
+                                                var logsNotIncluded = []
+                                                logs.forEach(function(resYEtst,index) {
+                                                    var array3 = beforeLog[index] || []
+                                                    var array4 = resYEtst
+                                                    const array4Sorted = array4.slice().sort();
+                                                    var compare4 = (array3.length === array4.length && array3.slice().sort().every(function(value, index) {
+                                                        return value === array4Sorted[index];
+                                                    }))
+                                                    if (compare4 == false) {
+                                                        logsNotIncluded.push(resYEtst)
+                                                    }
+                                                })
+                                                beforeLog = logs
+                                                if (socketsWithId[id] != undefined) {
+                                                    logsNotIncluded.forEach(function(resYEtst) {
+                                                        socketsWithId[id].emit('log',resYEtst[0],resYEtst[1].split('Enum.MessageType.')[1])
+                                                    })
+                                                } 
+                                            }
+                                        }
+                                        if (body.data[0].Value == id) {
+                                            console.log('Unable to recieve logs')
+                                            if (socketsWithId[id] != undefined) {
+                                                idsNoWork[id] = true
+                                                socketsWithId[id].emit('log','Unable to recieve logs','MessageError')
+                                                await new Promise(r => setTimeout(r, 600));
+                                                socketsWithId[id].emit('log','This is because the person running this site set the config incorrectly\nOr this is being hosted locally','MessageInfo')
+                                            } else {
+                                                idsNoWork[id] = false
+                                            }
                                         } else {
                                             idsNoWork[id] = false
                                         }
                                     } else {
                                         idsNoWork[id] = false
                                     }
-                                } else {
-                                    idsNoWork[id] = false
                                 }
+                                doneReq = true
+                            },placeID)
+                            while (true) {
+                                if (doneReq != false) {
+                                    break
+                                }
+                                await new Promise(r => setTimeout(r, 10));
                             }
-                        },placeID)
+                            if (stopReq == true) {
+                                break
+                            }
+                            await new Promise(r => setTimeout(r, 1500));
+                            current = current +1
+                        }
+                        console.log('Stopped listening for logs')
+                        */
                     } else {
                         console.log('Failed to upload')
+                        delete idsYE[id]
                         return res.status(400).send({'nope': 'no means no'})
                     }
                 },true,token, file)
@@ -596,6 +932,8 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
     }
 })
 
+// OLD HTTP SYSTEM; MOVED TO DATASTORES
+/*
 var types = [
     'MessageOutput',
     'MessageInfo',
@@ -622,6 +960,7 @@ app.post('/debug/get', function(req,res) {
         res.status(200).send({'nope': 'nothing to see here'})
     }
 })
+
 
 app.post('/debug/messageOut', function(req,res) {
     console.log(req.body)
@@ -683,6 +1022,7 @@ io.on('connection',async function(socket) {
         }
     })
 })
+*/
 
 app.post('/logout', function (req, res) {
     var cookie = req.cookies['ROBLOSECURITY']
@@ -728,13 +1068,14 @@ app.post('/newPlace', function (req, res) {
         return res.status(200).send({})
     }
     var file = fs.readFileSync(__dirname + '/RoEditorFormat.rbxlx').toString('utf8')
-    RobloxRequest('https://api.roblox.com/universes/create', 'POST', cookie, function(err,res2,body) {
+    RobloxRequest('https://apis.roblox.com/universes/v1/universes/create', 'POST', cookie, function(err,res2,body) {
         var token = ''
         console.log(body)
         var headers = res2.headers
         if (headers['x-csrf-token'] != undefined) {
             token = headers['x-csrf-token']
-            RobloxRequest('https://api.roblox.com/universes/create', 'POST', cookie, function(err2,res4,body2) {
+            RobloxRequest('https://apis.roblox.com/universes/v1/universes/create', 'POST', cookie, function(err2,res4,body2) {
+                console.log(body2)
                 if (res4.statusCode != 200) {
                     res.status(403).send(body2)
                 } else {
@@ -750,7 +1091,7 @@ app.post('/newPlace', function (req, res) {
                         }
                     },true,token, file)
                 }
-            },true,token, JSON.stringify({templatePlaceIdToUse: 95206881}))
+            },true,token, JSON.stringify({templatePlaceIdToUse: 6560363541}))
         } else {
             res.status(403).send(JSON.stringify({
                 "errors": [
@@ -914,7 +1255,8 @@ function MakeDSRequest(url,body,cookie,callback,place) {
         headers: {
             'Roblox-Place-Id': place,
             'Content-Type': 'application/x-www-form-urlencoded',
-            Cookie: `.ROBLOSECURITY=${cookie}; path=/; domain=.roblox.com;`
+            Cookie: `.ROBLOSECURITY=${cookie}; path=/; domain=.roblox.com;`,
+            'User-Agent': 'Roblox/WinInet',
         },
         url: url,
         method: 'POST',
@@ -947,6 +1289,10 @@ app.get('/upload',function(req,res) {
     res.sendFile(__dirname + '/upload.html')
 })
 
+app.get('/open.png',function(req,res) {
+    res.sendFile(__dirname + '/open.png')
+})
+
 const fun = require("funcaptcha")
 
 app.post('/2step', async function(req,res) {
@@ -976,7 +1322,6 @@ app.post('/2step', async function(req,res) {
                         if (res2.statusCode != 200) {
                             res.status(403).send(body)
                         } else {
-                            console.log(body4)
                             if (res2.headers['set-cookie'] != undefined) {
                                 var indexYE = 0
                                 res2.headers['set-cookie'].forEach(function(val,index) {
@@ -1056,22 +1401,36 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
     if (before == undefined) {
         res.send(200).send('no')
     }
-    const token = await fun.getToken({
-        pkey: "476068BF-9607-4799-B53D-966BE98E2B81",
-        surl: "https://roblox-api.arkoselabs.com",
-        data: { 
-            blob: before
-        },
-        headers: {
-            "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'
-        },
-        site: "https://www.roblox.com"
-        //proxy: "http://127.0.0.1:8888"
-    })
+    var token = undefined
+    var yeAttempt = 1
+    
+    while (true) {
+        var tokenYE = await fun.getToken({
+            pkey: "476068BF-9607-4799-B53D-966BE98E2B81",
+            surl: "https://roblox-api.arkoselabs.com",
+            data: { 
+                blob: before
+            },
+            headers: {
+                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'
+            },
+            site: "https://www.roblox.com"
+        })
+        if (yeAttempt >= 20) {
+            return res.status(200).send('bruh')
+        }
+        if (tokenYE.token != undefined) {
+            token = tokenYE
+            break
+        }
+        yeAttempt = yeAttempt +1
+    }
+    console.log(token)
     var session = new fun.Session(token)
     if (session.gameType != 3) {
         sessionYE[token.token.split('|')[0]] = token
         var challenge = await session.getChallenge()
+        console.log(challenge)
         sessionYEChallenge[token.token.split('|')[0]] = challenge
 
         var messageYE = challenge.data.string_table['3.instructions-' + challenge.data.game_data.game_variant]
@@ -1096,8 +1455,6 @@ const { DOMParser, XMLSerializer } = require('@xmldom/xmldom')
 const crypto = require('crypto')
 var randomId = require('random-id')
 var zlib = require('zlib')
-const { connectors } = require("googleapis/build/src/apis/connectors")
-const { reseller } = require("googleapis/build/src/apis/reseller")
 
 function encrypt(text,key) {
     if (key.length < 32) {
@@ -1191,12 +1548,26 @@ function GenerateSaltFromIp(ip) {
     return otherChars
 }
 
-function validXml(xmlFile){
+function validXml(xmlFile,removeOtherScripts){
     var xmlDoc;
     var error = false
     var parser = new DOMParser({errorHandler:{warning:function(w){error=true},error:function(w){error=true},fatalError:function(w){error=true}}})
     xmlDoc = parser.parseFromString(xmlFile,'application/xml')
     if (xmlDoc.documentElement != undefined && error == false) {
+        if (removeOtherScripts == true) {
+            var elements = xmlDoc.documentElement.getElementsByTagName('Item')
+            for (let i = 0; i < elements.length; i++) {
+                var item = elements[i]
+                if (item.getAttribute('class') == 'Script') {
+                    console.log(item.getAttribute('class'))
+                    console.log(item.getAttribute('referent'))
+                }
+                if (item.getAttribute('class') == 'Script' && item.getAttribute('referent') == 'RBX2') {
+                    console.log('Removing old item')
+                    xmlDoc.documentElement.removeChild(item)
+                }
+            }
+        }
         const serializer = new XMLSerializer();
         const xmlStr = serializer.serializeToString(xmlDoc)
         return xmlStr
@@ -1378,8 +1749,8 @@ async function DoCrap() {
             ip = ip.substr(7)
         }
     })
-    module.exports = server
-    //server.listen(process.env.PORT || 3000)
+    //module.exports = server
+    server.listen(process.env.PORT || 3000)
 }
 
 DoCrap()
