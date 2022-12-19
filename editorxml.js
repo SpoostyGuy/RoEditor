@@ -814,6 +814,149 @@ function mYes(name) {
     socket.emit('send',name)
 }
 
+Math.radians = function(degrees) {
+	return degrees * Math.PI / 180;
+}
+
+function rotateObject(object, degreeX=0, degreeY=0, degreeZ=0) {
+    object.rotateX(THREE.MathUtils.degToRad(degreeX));
+    object.rotateY(THREE.MathUtils.degToRad(degreeY));
+    object.rotateZ(THREE.MathUtils.degToRad(degreeZ));
+}
+
+async function LoadWorkspaceItems(liveItems) {
+    boxes = {}
+    const items = liveItems
+    //console.log(xmlFormatted.querySelector('[class="Workspace"]').querySelector('[class="Decal"]'))
+    for (amount = 0; amount < items.length; amount++) {
+        var object = items[amount]
+        if (amount > 700) { 
+            break
+        }
+        if (object.ClassName.includes('Part') == true) {
+            var properties = object
+            console.log(properties)
+            if (properties != undefined) {
+                try {
+                    //var color = properties.querySelector('[name="Color3uint8"]')
+                    //var color2 = properties.querySelector('[name="BrickColor"]')
+                    //var cframe = properties.querySelector('[name="CFrame"]')
+                    var size = properties.Size.replaceAll(' ','')
+                    var transparency = (1-Number(properties.Transparency))
+                    var size = properties.Size.replaceAll(' ','')
+                    var color = properties.Color.replaceAll(' ','')
+                    var colorR = Math.floor((Number(color.split(',')[0])*255))
+                    var colorG = Math.floor((Number(color.split(',')[1])*255))
+                    var colorB = Math.floor((Number(color.split(',')[2])*255))
+                    var positionYE = properties.Position.replaceAll(' ','')
+                    var rotationYE = properties.Rotation.replaceAll(' ','')
+                    var posx = Number(positionYE.split(',')[0])
+                    var posy = Number(positionYE.split(',')[1])
+                    var posz = Number(positionYE.split(',')[2])
+                    var sizex = Number(size.split(',')[0])
+                    var sizey = Number(size.split(',')[1])
+                    var sizez = Number(size.split(',')[2])
+                    var rotationX = Number(rotationYE.split(',')[0])
+                    var rotationY = Number(rotationYE.split(',')[1])
+                    var rotationZ = Number(rotationYE.split(',')[2])
+                    const box = new THREE.BoxGeometry(parseInt(sizex), parseInt(sizey), parseInt(sizez))
+                    // outlinePass.selectedObjects = box;
+                    
+                    var colorYe = 'rgba(' + colorR + ',' + colorG + ',' + colorB + ',1)'
+                    
+                    /*
+                    if (color != undefined) {
+                        colorYe = color3ToRgba(color.textContent)
+                    }
+
+                    if (color2 != undefined && color2 != '') {
+                        console.log(color2.textContent)
+                        colorYe = 'rgba(' + brickToRGB[color2.textContent] + ',1)'
+                    }
+                    */
+
+                    console.log(colorYe)
+                    var material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                    /*
+                    if (false != false) {
+                        var id = object.querySelector('[class="Decal"]').children[0].querySelector('[name="Texture"]').textContent.replace(/\D/g, '')
+                        MakeRobloxRequest('/assetURL','POST', JSON.stringify({id: id}),true,function(is,res) {
+                            var bodyYE = JSON.parse(res.responseText)
+                            if (bodyYE.locations != undefined) {
+                                var loader = new THREE.TextureLoader();
+                                loader.load(bodyYE.locations[0].location, function ( texture ) {
+                                    material = new THREE.MeshMatcapMaterial( { color: colorYe, map: texture } );
+                                })
+                            } else {
+                                material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                            }
+                        })
+                        while (true) {
+                            if (material != undefined) {
+                                break
+                            }
+                            await new Promise(r => setTimeout(r, 10));
+                        }
+                    } else {
+                        material = new THREE.MeshMatcapMaterial( { color: colorYe} );
+                    }
+                    */
+
+                    if (transparency != 1) {
+                        material.transparent = true
+                        material.opacity = transparent
+                    }
+
+                    console.log(sizex)
+                    console.log(sizey)
+                    console.log(sizez)
+
+                    const mesh = new THREE.Mesh(box,material)
+                    //mesh.quaternion.setFromRotationMatrix( matrix );
+                    mesh.position.set(parseInt(posx), parseInt(posy), parseInt(posz))
+                    
+                    console.log(mesh)
+
+                    rotateObject(mesh, rotationX, rotationY, rotationZ);
+
+                    //boxes[object.getAttribute('referent')] = [box,[parseInt(posx),parseInt(posy),parseInt(posz)],mesh,matrix]
+
+                    //ids[mesh.uuid] = object.getAttribute('referent')
+                    scene.add(mesh)
+                    
+                    console.log(mesh)
+
+                    /*
+                    const dir = new THREE.Vector3( parseInt(posx),parseInt(posy),parseInt(posz) );
+
+                    dir.normalize();
+
+                    const origin = new THREE.Vector3(parseInt(posx),parseInt(posy),parseInt(posz));
+                    const length = 4;
+                    const hex = 0xffff00;
+
+                    const arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+                    scene.add( arrowHelper );
+                    */
+                
+                    renderer.render(scene,camera)
+                } catch(e) {
+                    console.log(e)
+                }
+            }
+        }
+    }
+}
+
+function RefreshLive(liveItems) {
+    console.log('ReRendering scene for live update')
+    for( var i = scene.children.length - 1; i >= 0; i--) { 
+        obj = scene.children[i];
+        scene.remove(obj); 
+    }
+    LoadWorkspaceItems(liveItems)
+}
+
 async function debug() {
     const iconButtonRipple = new mdc.ripple.MDCRipple(document.querySelector('.mdc-icon-button'));
     iconButtonRipple.unbounded = true;
@@ -890,6 +1033,14 @@ async function debug() {
         document.getElementById('runCommand').style.display = 'none'
         await new Promise(r => setTimeout(r, 500));
         buttonRipple.root.disabled = false
+        document.getElementById('updateText').remove()
+        document.getElementsByClassName('explorer1')[0].style.display = 'block'
+        document.getElementsByClassName('explorer2')[0].style.display = 'block'
+        document.getElementsByClassName('explorer3')[0].style.display = 'block'
+        document.getElementsByClassName('properties1')[0].style.display = 'block'
+        document.getElementsByClassName('properties2')[0].style.display = 'block'
+        document.getElementsByClassName('properties3')[0].style.display = 'block'
+        RerenderScene()
         document.getElementById('loggerDiv').style = "display: none; animation-name: ye; top: calc(100% + 4px); overflow-y: scroll;"
     }
 
@@ -913,28 +1064,42 @@ async function debug() {
                         bar.labelText = 'Waiting for logger to start...'
                     }
                 } else {
-                    response4.forEach(async function(responseTest) {
+                    var responseData8 = response4.logs || []
+                    if (response4.workspaceData != undefined) {
+                        console.log('Got workspace data:')
+                        console.log(response4.workspaceData)
+                        RefreshLive(response4.workspaceData)
+                        if (started == false) {
+                            document.getElementsByClassName('explorer1')[0].style.display = 'none'
+                            document.getElementsByClassName('explorer2')[0].style.display = 'none'
+                            document.getElementsByClassName('explorer3')[0].style.display = 'none'
+                            document.getElementsByClassName('properties1')[0].style.display = 'none'
+                            document.getElementsByClassName('properties2')[0].style.display = 'none'
+                            document.getElementsByClassName('properties3')[0].style.display = 'none'
+                            document.body.insertAdjacentHTML('afterbegin', '<div id="updateText" style=" width: 100%; height: 25px; z-index: 100; font-weight: bold; text-align: center; position: absolute; background-color: rgb(159, 227, 100); box-shadow: 0px 2px 2px 0px rgb(0 0 0 / 14%), 0px 3px 1px -2px rgb(0 0 0 / 12%), 0px 1px 5px 0px rgb(0 0 0 / 20%); ">LIVE updating server view, updates ~5.8 seconds</div>')
+                        } else {
+                            document.getElementById('updateText').style.backgroundColor = 'orange'
+                            document.getElementById('updateText').innerHTML = 'Updating...'
+                        }
+                    } else {
+                        document.getElementById('updateText').style.backgroundColor = 'rgb(159, 227, 100)'
+                        document.getElementById('updateText').innerHTML = 'LIVE updating server view, updates ~5.8 seconds'
+                    }
+                    responseData8.forEach(async function(responseTest) {
                         var data = responseTest[0]
                         var type = responseTest[1].split('Enum.MessageType.')[1]
                         console.log(data + type)
                         if (started == false) {
                             started = true
                             bar.close()
-                            var loop = document.getElementById('loggerDiv').getElementsByClassName('yar')
-                            for (amount = 0; amount < loop.length; amount++) {
-                                var object = loop[amount]
-                                console.log(object.innerHTML)
-                                object.remove()
+                            var loop13 = document.getElementById('loggerDiv').getElementsByClassName('yar')
+                            for (amount24 = 0; amount24 < loop13.length; amount++) {
+                                var object84 = loop13[amount24]
+                                object84.remove()
                             }
                             document.getElementById('loggerDiv').style = "display: block; overflow-y: scroll;"
                             await new Promise(r => setTimeout(r, 500));
                             document.getElementById('runCommand').style.display = 'block'
-                            var loop = document.getElementById('loggerDiv').getElementsByClassName('yar')
-                            for (amount = 0; amount < loop.length; amount++) {
-                                var object = loop[amount]
-                                console.log(object.innerHTML)
-                                object.remove()
-                            }
                         }
                         if (checkFor != undefined) {
                             if (data.includes(checkFor)) {
@@ -1283,6 +1448,15 @@ async function ShowWebGLItems() {
             }
         }
     }
+}
+
+function RefreshLive(liveItems) {
+    console.log('ReRendering scene for live update')
+    for( var i = scene.children.length - 1; i >= 0; i--) { 
+        obj = scene.children[i];
+        scene.remove(obj); 
+    }
+    LoadWorkspaceItems(liveItems)
 }
 
 function RerenderScene() {

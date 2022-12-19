@@ -437,6 +437,7 @@ var idStatus = {}
 var jobIds = {}
 var idLastTime = {}
 var beforeLogYE = {}
+var liveChangeCount =  []
 
 app.get('/getStatus',async function(req,res) {
     if (req.query.id == undefined) {
@@ -471,6 +472,7 @@ app.get('/getStatus',async function(req,res) {
                 console.log('Region of server: ' + body.regionName)
             })
             */
+            liveChangeCount[req.query.id] = 1
             idStatus[req.query.id] = 'first_log'
             return res.status(200).send({status: 'first_log'})
         } else {
@@ -524,20 +526,35 @@ app.get('/getStatus',async function(req,res) {
                 }
                 if (res.statusCode == 200) {
                     if (body.data[0] != undefined) {
-                        var logs = undefined
+                        var logs4 = {1:'h'}
                         try {
-                            logs = Object.values(JSON.parse(JSON.parse(body.data[0].Value)))
+                            logs4 = (JSON.parse(JSON.parse(body.data[0].Value)))
                         } catch {
                         }
-                        console.log(logs)
+                        var logs8 = []
+                        Object.keys(logs4).forEach(function(val,index){
+                            var keyInNumber = Number(val)
+                            var value = Object.values(logs4)[index]
+                            logs8.push({time: keyInNumber, value: value})
+                        })                        
+                        logs8 = logs8.sort((a, b) => {
+                            if (a.time < b.time) {
+                              return -1;
+                            }
+                        });
+                        var logs = []
+                        logs8.forEach(function(val) {
+                            logs.push(val.value)
+                        })
                         if (logs != undefined) {
-                            var date = new Date()
-                            date.setMilliseconds((Number(Object.keys(JSON.parse(JSON.parse(body.data[0].Value)))[0])+2))
+                            var date = new Date(0)
+                            date.setMilliseconds((logs8[1].time)+2)
                             console.log(date)
-                            if (logs[0] != id) {
+                            if (logs[1] != id) {
                                 doneReq = true
                                 return;
                             }
+                            logs.shift()
                             logs.shift()
                             if (beforeLogYE[id] == undefined) {
                                 beforeLogYE[id] = []
@@ -612,6 +629,42 @@ app.get('/getStatus',async function(req,res) {
                 await new Promise(r => setTimeout(r, 10));
             }
             console.log(doneReq)
+            
+            var liveCheck = undefined
+
+            try {
+                liveCheck = (JSON.parse(JSON.parse(bodyData.data[0].Value)))
+            } catch {
+            }
+
+            var partLive = undefined
+
+            if (liveCheck != undefined) {
+                var currentNum = Number(Object.values(liveCheck)[0])
+                if (Number(liveChangeCount[req.query.id]) < currentNum) {
+                    liveChangeCount[req.query.id] = currentNum
+                    console.log('Loading visual data...')
+                    var partData = false
+                    MakeDSRequest('https://gamepersistence.roblox.com/persistence/getV2?placeId=' + placeID + '&type=standard&scope=' + 'global','&qkeys[0].scope=global&qkeys[0].target=0&qkeys[0].key=LiveView',cookie,async function(err,res,body) {
+                        var properties4 = [{'Name': 'unable to load'}]
+                        try {
+                            bodyData = JSON.parse(body)
+                            body = JSON.parse(body)
+                            properties4 = (JSON.parse(JSON.parse(body.data[0].Value)))
+                        } catch {
+                        }
+                        partData = properties4
+                    },placeID)
+                    while (true) {
+                        if (partData != false) {
+                            break
+                        }
+                        await new Promise(r => setTimeout(r, 10));
+                    }
+                    partLive = partData
+                }
+            }
+
             console.log('done')
             if (bodyData.errors != undefined) {
                 if (bodyData.errors[0].code == 8) {
@@ -655,11 +708,18 @@ app.get('/getStatus',async function(req,res) {
             }
             idLastTime[req.query.id] = (new Date().getTime())
             if (doneReq == true) {
-                return res.status(200).send([])
+                if (partLive != undefined) {
+                    return res.status(200).send({logs: [], workspaceData: partLive})
+                } else {
+                    return res.status(200).send({logs: []})
+                }
             } else {
-                return res.status(200).send(doneReq)
+                if (partLive != undefined) {
+                    return res.status(200).send({logs: doneReq, workspaceData: partLive})
+                } else {
+                    return res.status(200).send({logs: doneReq})
+                }
             }
-            console.log(doneReq)
         }
     }
     return res.status(200).send({status: idStatus[req.query.id]})
@@ -704,11 +764,6 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
         idsYE[temp] = req.body.split('#!')[0]
         var luaScript = '\nlocal currentUrl = "' + currentUrl + '"\nlocal currentId = "' + id + '"\n' +  fs.readFileSync(__dirname + '/debugScript.lua').toString('utf8')
 
-        var string1 = `<Item class="Script" referent="RBX2">`
-
-        var string2 = `</ProtectedString>
-        </Properties>
-        </Item>`
 
         /*
         var len = (valid.split(string1).length/2)
@@ -1432,8 +1487,9 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
     var session = new fun.Session(token)
     if (session.gameType != 3) {
         sessionYE[token.token.split('|')[0]] = token
+        var embed = session.getEmbedUrl()
+        console.log(embed)
         var challenge = await session.getChallenge()
-        console.log(challenge)
         sessionYEChallenge[token.token.split('|')[0]] = challenge
 
         var messageYE = challenge.data.string_table['3.instructions-' + challenge.data.game_data.game_variant]
