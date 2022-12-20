@@ -1454,41 +1454,70 @@ app.get('/an',async function(req,res) {
     }
 })
 
+function MakeChaptchaRequest(url,method,callback,body,urlencoded) {
+    var form = new URLSearchParams(Object.entries(body)).toString()
+    request({
+        headers: {
+            'Content-Length': form.length,
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'dnt': 1,
+            'origin': 'https://www.roblox.com',
+            'referer': 'https://www.roblox.com/',
+            'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Chrome OS"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'cross-site',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36',
+        },
+        url: url,
+        method: method,
+        body: form
+    }, callback)
+}
+
+
+var bda = require('./node_modules/funcaptcha/lib/util')
+
 app.post('/makeChaptchaCorsRequest', async function(req,res) {
     var before = req.body.before
     if (before == undefined) {
         res.send(200).send('no')
     }
     var token = undefined
-    var yeAttempt = 1
-    
+    var browser_data = bda.default.getBda('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36')
+
     while (true) {
-        var tokenYE = await fun.getToken({
-            pkey: "476068BF-9607-4799-B53D-966BE98E2B81",
-            surl: "https://roblox-api.arkoselabs.com",
-            data: { 
-                blob: before
-            },
-            headers: {
-                "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'
-            },
-            site: "https://www.roblox.com"
+        var body4 = undefined
+        MakeChaptchaRequest('https://roblox-api.arkoselabs.com/fc/gt2/public_key/?public_key=476068BF-9607-4799-B53D-966BE98E2B81', 'POST', async function(err,res2,body) {
+            body = JSON.parse(body)
+            body4 = body
+        }, {
+            bda: browser_data,
+            'data[blob]': before,
+            public_key: '476068BF-9607-4799-B53D-966BE98E2B81',
+            site: 'https://www.roblox.com',
+            userbrowser: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36',
+            rnd: Math.random(),
+            language: "en"
         })
-        if (yeAttempt >= 20) {
-            return res.status(200).send('bruh')
+        while (true) {
+            if (body4 != undefined) {
+                break
+            }
+            await new Promise(r => setTimeout(r, 10));
         }
-        if (tokenYE.token != undefined) {
-            token = tokenYE
+        if (body4.token != undefined) {
+            token = body4
             break
         }
-        yeAttempt = yeAttempt +1
     }
-    console.log(token)
     var session = new fun.Session(token)
     if (session.gameType != 3) {
         sessionYE[token.token.split('|')[0]] = token
-        var embed = session.getEmbedUrl()
-        console.log(embed)
         var challenge = await session.getChallenge()
         sessionYEChallenge[token.token.split('|')[0]] = challenge
 

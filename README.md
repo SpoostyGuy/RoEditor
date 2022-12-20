@@ -22,7 +22,7 @@ I don't store your password but other people who host this could, don't enter yo
 
 * Full explorer and script editor
 
-* Ability to run your workspace project remotely and receive logs back
+* Ability to run your game, recieve logs back, and have a live view of it running
 
 * Game explorer with thumbnails
 
