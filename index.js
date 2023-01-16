@@ -837,6 +837,7 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
             var headers = res2.headers
             if (headers['x-csrf-token'] != undefined) {
                 token = headers['x-csrf-token']
+                console.log(req.body.split('#!')[0])
                 RobloxRequest2('https://data.roblox.com/Data/Upload.ashx?assetid=' + req.body.split('#!')[0], 'POST', cookie, async function(err2,res4,body2) {
                     if (res4.statusCode == 200) {
                         console.log('Upload success!')
@@ -978,6 +979,8 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
                         */
                     } else {
                         console.log('Failed to upload')
+                        console.log(body)
+                        console.log(res4.statusCode)
                         delete idsYE[id]
                         return res.status(400).send({'nope': 'no means no'})
                     }
@@ -1138,6 +1141,7 @@ app.post('/newPlace', function (req, res) {
                     res.status(403).send(body2)
                 } else {
                     body2 = JSON.parse(body2)
+                    console.log(body2)
                     RobloxRequest2('https://data.roblox.com/Data/Upload.ashx?assetid=' + body2['RootPlaceId'], 'POST', cookie, async function(err2,res4,body4) {
                         if (res4.statusCode == 200) {
                             console.log('Created and uploaded place: ')
@@ -1149,7 +1153,7 @@ app.post('/newPlace', function (req, res) {
                         }
                     },true,token, file)
                 }
-            },true,token, JSON.stringify({templatePlaceIdToUse: 6560363541}))
+            },true,token, JSON.stringify({templatePlaceId: "6560363541"}))
         } else {
             res.status(403).send(JSON.stringify({
                 "errors": [

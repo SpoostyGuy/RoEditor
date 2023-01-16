@@ -3,16 +3,11 @@ function PrintActivity(print) {
     console.log('[RoEditor] ' + print)
 }
 
-const origConsoleLog = console.log;
-const logArr = [];
-console.log = (...args) => {
-  origConsoleLog.apply(console, args);
-  logArr.push(args);
-};
 const logAll = () => {
-  origConsoleLog.call(console, logArr.join('\n'));
+  
 };
 
+var controls = ''
 
 var brickToRGB = {
     "1": "242, 243, 243",
@@ -761,7 +756,7 @@ async function initWebGL() {
     scene.background = new THREE.Color('rgb(22, 169, 243)')
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth,window.innerHeight)
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2500)
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100000)
     var properties = xmlFormatted.querySelector('[class="Workspace"]').querySelector('[class="Camera"]').children[0]
     console.log(properties)
     var cframe = properties.querySelector('[name="CFrame"]')
@@ -780,20 +775,19 @@ async function initWebGL() {
     var R20 = cframe.getElementsByTagName('R20')[0].textContent
     var R21 = cframe.getElementsByTagName('R21')[0].textContent
     var R22 = cframe.getElementsByTagName('R22')[0].textContent
-    var matrix = new THREE.Matrix4(); // create once and reuse it
-    matrix.set(
-        R00,R01,R02,  posx,
-        R10,R11,R12,  posy,
-        R20,R21,R22,  posz,
-        0,   0,   0,  1
-    );
-
-    var myquat = new THREE.Quaternion()
-    myquat.setFromRotationMatrix(matrix)
-
-    camera.applyQuaternion(myquat);
-    camera.quaternion.normalize()
-
+    var rotationX = 0
+    var rotationZ = 0
+    var rotationY = Math.asin( clamp( R02, - 1, 1 ) )
+    if ( Math.abs(R02) < 0.9 ) {
+        rotationX = Math.atan2( - R12, R22);
+        rotationZ = Math.atan2( - R01, R00);
+    } else {
+        rotationX = Math.atan2( - R22, R11);
+        rotationZ = 0;
+    }
+    
+    rotateObject(camera, rotationX, rotationY, rotationZ,true);
+    
     camera.position.set(posx,posy,posz)
     scene.add(new THREE.HemisphereLight(0xffffff,0xffffff,1.0))
     document.getElementById('allBeforeLoad').appendChild(renderer.domElement)
@@ -818,10 +812,16 @@ Math.radians = function(degrees) {
 	return degrees * Math.PI / 180;
 }
 
-function rotateObject(object, degreeX=0, degreeY=0, degreeZ=0) {
-    object.rotateX(THREE.MathUtils.degToRad(degreeX));
-    object.rotateY(THREE.MathUtils.degToRad(degreeY));
-    object.rotateZ(THREE.MathUtils.degToRad(degreeZ));
+function rotateObject(object, degreeX=0, degreeY=0, degreeZ=0, isAlready) {
+    if (isAlready == true) {
+        object.rotateX(degreeX)
+        object.rotateY(degreeY)
+        object.rotateZ(degreeZ)
+    } else {
+        object.rotateX(THREE.MathUtils.degToRad(degreeX));
+        object.rotateY(THREE.MathUtils.degToRad(degreeY));
+        object.rotateZ(THREE.MathUtils.degToRad(degreeZ));
+    }
 }
 
 async function LoadWorkspaceItems(liveItems) {
@@ -1082,8 +1082,10 @@ async function debug() {
                             document.getElementById('updateText').innerHTML = 'Updating...'
                         }
                     } else {
-                        document.getElementById('updateText').style.backgroundColor = 'rgb(159, 227, 100)'
-                        document.getElementById('updateText').innerHTML = 'LIVE updating server view, updates ~5.8 seconds'
+                        if (document.getElementById('updateText') != null) {
+                            document.getElementById('updateText').style.backgroundColor = 'rgb(159, 227, 100)'
+                            document.getElementById('updateText').innerHTML = 'LIVE updating server view, updates ~5.8 seconds'
+                        }
                     }
                     responseData8.forEach(async function(responseTest) {
                         var data = responseTest[0]
@@ -1317,9 +1319,9 @@ function handleArrayBuffer(arrayBuffer) {
         var array = new Uint8Array(arrayBuffer);
         var totalBytes = array.length * array.BYTES_PER_ELEMENT;
         var pointer = Module._malloc(totalBytes);
+        console.log(pointer)
         var dataHeap = new Uint8Array(Module.HEAPU8.buffer, pointer, totalBytes);
         dataHeap.set(array);
-
         var xmlBufferPointer = Module._to_xml(pointer, 5);
         var xmlPointer = Module.getValue(xmlBufferPointer, 'i16*');
         var size = Module.getValue(xmlBufferPointer + 4, 'i32');
@@ -1334,15 +1336,48 @@ function handleArrayBuffer(arrayBuffer) {
     }
 }
 
+function zoomCameraToSelection(selection, fitRatio = 1.2) {
+  const box = new THREE.Box3();
+
+  for (const object of selection) box.expandByObject(object);
+
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+  const fitHeightDistance =
+    maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
+  const fitWidthDistance = fitHeightDistance / camera.aspect;
+  const distance = fitRatio * Math.max(fitHeightDistance, fitWidthDistance);
+
+  const direction = controls.target
+    .clone()
+    .sub(camera.position)
+    .normalize()
+    .multiplyScalar(distance);
+
+  controls.maxDistance = distance * 10;
+  controls.target.copy(center);
+
+  camera.near = distance / 100;
+  camera.far = distance * 100;
+  camera.updateProjectionMatrix();
+
+  camera.position.copy(controls.target).sub(direction);
+
+  controls.update();
+}
+
+function clamp(num,min,max){
+  return(Math.max(Math.min(num,max),min))
+}
+
 async function ShowWebGLItems() {
     boxes = {}
     const items = xmlFormatted.querySelector('[class="Workspace"]').getElementsByTagName('Item')
     //console.log(xmlFormatted.querySelector('[class="Workspace"]').querySelector('[class="Decal"]'))
     for (amount = 0; amount < items.length; amount++) {
         var object = items[amount]
-        if (amount > 700) { 
-            break
-        }
         if (object.getAttribute('class').includes('Part') == true) {
             var properties = object.children[0]
             if (properties != undefined) {
@@ -1353,7 +1388,7 @@ async function ShowWebGLItems() {
                     var size = properties.querySelector('[name="size"]')
                     var posx = cframe.getElementsByTagName('X')[0].textContent
                     var posy = cframe.getElementsByTagName('Y')[0].textContent
-                    var posz = cframe.getElementsByTagName('Z')[0].textContent
+                    var posz = (- parseInt(cframe.getElementsByTagName('Z')[0].textContent))
                     var sizex = size.getElementsByTagName('X')[0].textContent
                     var sizey = size.getElementsByTagName('Y')[0].textContent
                     var sizez = size.getElementsByTagName('Z')[0].textContent
@@ -1367,17 +1402,17 @@ async function ShowWebGLItems() {
                     var R21 = cframe.getElementsByTagName('R21')[0].textContent
                     var R22 = cframe.getElementsByTagName('R22')[0].textContent
                     const box = new THREE.BoxGeometry(parseInt(sizex), parseInt(sizey), parseInt(sizez))
-                    var matrix = new THREE.Matrix4(); // create once and reuse it
-                    matrix.set(
-                        R00,R01,R02,  posx,
-                        R10,R11,R12,  posy,
-                        R20,R21,R22,  posz,
-                        0,   0,   0,  1
-                    );
-
-                    var myquat = new THREE.Quaternion()
-                    myquat.setFromRotationMatrix(matrix)
-                    box.applyQuaternion(myquat);
+                    var rotationX = 0
+                    var rotationZ = 0
+                    var rotationY = Math.asin( clamp( R02, - 1, 1 ) )
+                    if ( Math.abs(R02) < 0.9 ) {
+                      rotationX = Math.atan2( - R12, R22);
+                      rotationZ = Math.atan2( - R01, R00);
+                    } else {
+                      rotationX = Math.atan2( - R22, R11);
+                      rotationZ = 0;
+                    }
+                    
 
                     // outlinePass.selectedObjects = box;
 
@@ -1388,11 +1423,9 @@ async function ShowWebGLItems() {
                     }
 
                     if (color2 != null && color2 != '') {
-                        console.log(color2.textContent)
                         colorYe = 'rgba(' + brickToRGB[color2.textContent] + ',1)'
                     }
 
-                    console.log(colorYe)
                     var material = undefined
 
                     if (object.querySelector('[class="Decal"]') != null) {
@@ -1418,17 +1451,15 @@ async function ShowWebGLItems() {
                         material = new THREE.MeshMatcapMaterial( { color: colorYe} );
                     }
                     const mesh = new THREE.Mesh(box,material)
-                    mesh.quaternion.setFromRotationMatrix( matrix );
+                    rotateObject(mesh, rotationX, rotationY, rotationZ,true);
                     //mesh.scale.set( parseInt(sizex), parseInt(sizey), parseInt(sizez) );
                     mesh.position.set(parseInt(posx), parseInt(posy), parseInt(posz))
                     
-                    boxes[object.getAttribute('referent')] = [box,[parseInt(posx),parseInt(posy),parseInt(posz)],mesh,matrix]
+                    boxes[object.getAttribute('referent')] = [box,[parseInt(posx),parseInt(posy),parseInt(posz)],mesh,[rotationX,rotationY,rotationZ]]
 
                     ids[mesh.uuid] = object.getAttribute('referent')
                     scene.add(mesh)
                     
-                    console.log(mesh)
-
                     /*
                     const dir = new THREE.Vector3( parseInt(posx),parseInt(posy),parseInt(posz) );
 
@@ -1443,7 +1474,8 @@ async function ShowWebGLItems() {
                     */
                 
                     renderer.render(scene,camera)
-                } catch {
+                } catch(error) {
+                    console.log(error)
                 }
             }
         }
@@ -1806,6 +1838,7 @@ async function clickYE(m,parent,objectfound2,node) {
         currentSelection.style.backgroundImage = 'linear-gradient(rgba(244, 244, 244,.5),rgba(200, 200, 200,.5))';
         currentSelection.style.color = 'rgb(0,0,0)'
         currentSelection.style.border = ''
+        controls.target = new THREE.Vector3(0,0,0)
         if (currentOutline != undefined) {
             scene.remove(currentOutline[0])
             console.log(currentOutline)
@@ -1821,10 +1854,11 @@ async function clickYE(m,parent,objectfound2,node) {
         m.target.style.border = '2px solid rgb(42, 189, 273)'
         m.target.style.height = '34px'
         if (boxes[m.target.getAttribute('object')] != undefined) {
+            zoomCameraToSelection([boxes[m.target.getAttribute('object')][2]])
             var outlineMaterial1 = new THREE.MeshBasicMaterial( { color: '#007bff',wireframe : true } );
             var outlineMesh1 = new THREE.Mesh( boxes[m.target.getAttribute('object')][0], outlineMaterial1 );
-            outlineMesh1.quaternion.setFromRotationMatrix( boxes[m.target.getAttribute('object')][3] );
             outlineMesh1.position.set(boxes[m.target.getAttribute('object')][1][0],boxes[m.target.getAttribute('object')][1][1],boxes[m.target.getAttribute('object')][1][2])
+            rotateObject(outlineMesh1, boxes[m.target.getAttribute('object')][3][0],boxes[m.target.getAttribute('object')][3][1],boxes[m.target.getAttribute('object')][3][2],true);
             scene.add( outlineMesh1 );
             currentOutline = [outlineMesh1,boxes[m.target.getAttribute('object')][2],boxes[m.target.getAttribute('object')][2].material.color.getStyle()]
             boxes[m.target.getAttribute('object')][2].material.color.setStyle('rgb(11, 93, 181)')
@@ -1997,7 +2031,7 @@ var moveCamera = function() {
     if (currentmovement == 'q' || currentmovement.split('+')[0] == 'q' || currentmovement.split('+')[1] == 'q') {
         camera.translateY( - distance );
     }
-
+    
     renderer.render(scene,camera)
 }
 
@@ -2098,8 +2132,830 @@ document.onkeyup = function (event) {
     }
 }
 
+function procesLZ4(buffer) {
+    var decompressionArray = new Uint8Array(buffer)
+    var currentIndex = 0
+
+    function ReadInt32() { 
+        return decompressionArray[currentIndex++] + (decompressionArray[currentIndex++] * 256) + (decompressionArray[currentIndex++] * 65536) + (decompressionArray[currentIndex++] * 16777216)
+    }
+
+    function ReadInt16() { 
+        return (decompressionArray[currentIndex++] + (decompressionArray[currentIndex++] * 256))
+    }
+
+    function ReadByte() {
+        return decompressionArray[currentIndex++]
+    }
+
+
+    function Utf8ArrayToStr(array) {
+        var out, i, len, c;
+        var char2, char3;
+
+        out = "";
+        len = array.length;
+        i = 0;
+        while(i < len) {
+        c = array[i++];
+        switch(c >> 4)
+        { 
+          case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+            // 0xxxxxxx
+            out += String.fromCharCode(c);
+            break;
+          case 12: case 13:
+            // 110x xxxx   10xx xxxx
+            char2 = array[i++];
+            out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
+            break;
+          case 14:
+            // 1110 xxxx  10xx xxxx  10xx xxxx
+            char2 = array[i++];
+            char3 = array[i++];
+            out += String.fromCharCode(((c & 0x0F) << 12) |
+                           ((char2 & 0x3F) << 6) |
+                           ((char3 & 0x3F) << 0));
+            break;
+        }
+        }
+
+        return out;
+    }
+
+    function Match(arr) {
+        const begin = currentIndex
+        currentIndex += arr.length
+        for(let i = 0; i < arr.length; i++) {
+            if(arr[i] !== decompressionArray[begin + i]) { return false }
+        }
+        return true
+    }
+    
+    var groups = {}
+    var instances = {}
+    var textDecoderForSSTR = new TextDecoder()
+    
+    function handleItemType(decompressedData,type) {
+        // General Handling Functions
+        var processIndex = 0
+
+        function ReadNewInt32() { 
+            return (decompressedData[processIndex++] + (decompressedData[processIndex++] * 256) + (decompressedData[processIndex++] * 65536) + (decompressedData[processIndex++] * 16777216))
+        }
+        function ReadNewInt16() { 
+            return (decompressedData[processIndex++] + (decompressedData[processIndex++] * 256))
+        }
+        function ReadNewByte() {
+            return decompressedData[processIndex++]
+        }
+        function GetByteFloat() {
+            return ParseNormatFloat(ReadNewInt32())
+        }
+        function GetRobloxByteFloat() {
+            return ParseRobloxFloat(ReadNewInt32())
+        }
+        function GetArray(lengthArray) {
+            const result = new Uint8Array(decompressedData.buffer, processIndex, lengthArray)
+            processIndex += lengthArray
+            return result
+        }
+        function ParseNormatFloat(long) {
+            const exp = (long >>> 23) & 255
+            if(exp === 0) { return 0 }
+            const float = 2 ** (exp - 127) * (1 + (long & 0x7FFFFF) / 0x7FFFFF)
+            return long > 0x7FFFFFFF ? -float : float
+        }
+        function ParseRobloxFloat(long) {
+            const exp = long >>> 24
+            if(exp === 0) { return 0 }
+            const float = 2 ** (exp - 127) * (1 + ((long >>> 1) & 0x7FFFFF) / 0x7FFFFF)
+            return long & 1 ? -float : float
+        }
+        function ParseInterleavedFloat(count) {
+            return UINTInterleaved32(count, value =>
+                ParseRobloxFloat(value)
+            )
+        }
+        var TextEncoderString = new TextDecoder()
+        function GetNewString(stringLength) {
+            var beforeIndex = processIndex
+            processIndex = processIndex + stringLength
+            var shrunkBuffer = new Uint8Array(decompressedData.buffer, beforeIndex, stringLength)
+            var convertString = TextEncoderString.decode(shrunkBuffer)
+            //console.log(convertString)
+            return convertString
+        }
+        function ProcessRbxInterleaved(byteCount, width) {
+            const result = []
+            const count = byteCount / width
+
+            for(let i = 0; i < count; i++) {
+                const value = []
+
+                for(let d = 0; d < width; d++) {
+                    value[d] = decompressedData[processIndex + d * count + i]
+                }
+
+                result.push(value)
+            }
+
+            return result
+        }
+        function ParseRobloxDouble(long0, long1) {
+            const exp = (long0 >>> 20) & 0x7FF
+            const frac = (((long0 & 1048575) * 4294967296) + long1) / 4503599627370496
+            const neg = long0 & 2147483648
+
+            if(exp === 0) {
+                if(frac === 0) { return -0 }
+                const double = 2 ** (exp - 1023) * frac
+                return neg ? -double : double
+            } else if(exp === 2047) {
+                return frac === 0 ? Infinity : NaN
+            }
+
+            const double = 2 ** (exp - 1023) * (1 + frac)
+            return neg ? -double : double
+        }
+        function ParseByteDouble() {
+            const byte = ReadNewInt32()
+            return ParseRobloxDouble(ReadNewInt32, byte)
+        }
+        function UINTInterleaved32(number,run) {
+            const result = new Array(number)
+            const byteCount = number * 4
+
+            for(let i = 0; i < number; i++) {
+                const value = (decompressedData[processIndex + i] << 24)
+                    + (decompressedData[processIndex + (i + number) % byteCount] << 16)
+                    + (decompressedData[processIndex + (i + number * 2) % byteCount] << 8)
+                    + decompressedData[processIndex + (i + number * 3) % byteCount]
+
+                result[i] = run ? run(value) : value
+            }
+
+            processIndex += byteCount
+            return result
+        }
+        function IntInterleaved32(number) {
+            return UINTInterleaved32(number, value =>
+                (value % 2 === 1 ? -(value + 1) / 2 : value / 2)
+            )
+        }
+        
+        if (type == 'SSTR') {
+            // Shared string
+            ReadNewInt32()
+
+            const stringCount = ReadNewInt32()
+
+            for(let i = 0; i < stringCount; i++) {
+                const md5 = GetArray(16)
+                const length = ReadNewInt32()
+                const value = GetNewString(length)
+                var stringMD5 = textDecoderForSSTR.decode(md5)
+
+                console.log({ stringMD5, value })
+            }
+        }
+        if (type == 'INST') {
+            // Instance
+            var GroupId = ReadNewInt32()
+            var ClassName = GetNewString(ReadNewInt32())
+            ReadNewByte()
+            var InstanceCount = ReadNewInt32()
+            var InstanceIds = IntInterleaved32(InstanceCount)
+            /*
+            var group = parser.groups[groupId] = {
+                ClassName: className,
+                Objects: []
+            }
+            */
+            
+            groups[GroupId] = {ClassName: ClassName, Objects: [], Properties: {}}
+            
+            var instanceId = 0
+		    for(let i = 0; i < InstanceCount; i++) {
+                instanceId += InstanceIds[i]
+                groups[GroupId].Objects.push(instances[instanceId] = {ClassName: ClassName, Children: [], Properties: {}})
+            }
+        }
+        if (type == 'PRNT') {
+            // Parent property of an Instance
+            ReadNewByte()
+            var ParentAmount = ReadNewInt32()
+            var ChildrenIds = IntInterleaved32(ParentAmount)
+            var ParentIds = IntInterleaved32(ParentAmount)
+            
+            var ChildId = 0
+            var ParentId = 0
+                        
+            for(let i = 0; i < ParentAmount; i++) {
+                ChildId += ChildrenIds[i]
+                ParentId += ParentIds[i]
+                
+                var ChildInstance = instances[ChildId]
+                if (ParentId != -1) {
+                    ChildInstance.Properties["Parent"] = {Value: ParentId, Type: "Instance"}
+                }
+            }
+        }
+        if (type == 'PROP') {
+            // Property value for an instance (gonna be a whole chunk of code)
+            var groupHolder = groups[ReadNewInt32()]
+            var propertyName = GetNewString(ReadNewInt32())
+            if((decompressedData.length-processIndex) <= 0) {
+                return // empty chunk?
+            }
+            var amountOfInstances = groupHolder.Objects.length
+            var propertiesString = [null, "string", "bool", "int", "float", "double", "UDim", "UDim2", 
+            "Ray", "Faces", "Axes", "BrickColor", "Color3", "Vector2", "Vector3", "Vector2int16", 
+            "CFrame", "Quaternion", "Enum", "Instance", "Vector3int16", "NumberSequence", "ColorSequence",
+            "NumberRange", "Rect2D", "PhysicalProperties", "Color3uint8", "int64", "SharedString", "UnknownScriptFormat",
+            "Optional", "UniqueId"]
+            var dataType = ReadNewByte()
+            var propertyType = propertiesString[dataType]
+            var resultTypeName = propertyType || "Unknown"
+            var valueHolder = new Array(amountOfInstances)
+            
+            var isOptional = propertyType === "Optional"
+
+            if(isOptional) {
+                dataType = ReadNewByte()
+                propertyType = propertiesString[dataType]
+            }
+		
+            // Property handling function
+            if (propertyType == "string") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    var len = ReadNewInt32()
+                    valueHolder[i] = GetNewString(len)
+                }
+            }
+            if (propertyType == "bool") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = ReadNewByte() !== 0
+                }
+            }
+            if (propertyType == "int") {
+                valueHolder = IntInterleaved32(amountOfInstances)
+            }
+            if (propertyType == "float") {
+                valueHolder = ParseInterleavedFloat(amountOfInstances)
+            }
+            if (propertyType == "double") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = ParseByteDouble()
+                }
+            }
+            if (propertyType == "UDim") {
+                const scale = ParseInterleavedFloat(amountOfInstances)
+                const offset = IntInterleaved32(amountOfInstances)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [scale[i], offset[i]]
+                }
+            }
+            if (propertyType == "UDim2") {
+                const scaleX = ParseInterleavedFloat(amountOfInstances)
+                const scaleY = ParseInterleavedFloat(amountOfInstances)
+                const offsetX = IntInterleaved32(amountOfInstances)
+                const offsetY = IntInterleaved32(amountOfInstances)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [
+                        [scaleX[i], offsetX[i]],
+                        [scaleY[i], offsetY[i]]
+                    ]
+                }
+            }
+            if (propertyType == "Ray") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [
+                        [GetRobloxByteFloat(), GetRobloxByteFloat(), GetRobloxByteFloat()],
+                        [GetRobloxByteFloat(), GetRobloxByteFloat(), GetRobloxByteFloat()]
+                    ]
+                }
+            }
+            if (propertyType == "Faces") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    const data = ReadNewByte()
+
+                    valueHolder[i] = {
+                        Right: !!(data & 1),
+                        Top: !!(data & 2),
+                        Back: !!(data & 4),
+                        Left: !!(data & 8),
+                        Bottom: !!(data & 16),
+                        Front: !!(data & 32)
+                    }
+                }
+            }
+            if (propertyType == "Axes") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    const data = ReadNewByte()
+                    valueHolder[i] = {
+                        X: !!(data & 1),
+                        Y: !!(data & 2),
+                        Z: !!(data & 4)
+                    }
+                }
+            }
+            if (propertyType == "BrickColor") {
+                valueHolder = UINTInterleaved32(amountOfInstances)
+            }
+            if (propertyType == "Color3") {
+                const red = ParseInterleavedFloat(amountOfInstances)
+                const green = ParseInterleavedFloat(amountOfInstances)
+                const blue = ParseInterleavedFloat(amountOfInstances)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [red[i], green[i], blue[i]]
+                }
+            }
+            if (propertyType == "Vector2") {
+                const vecX = ParseInterleavedFloat(amountOfInstances)
+                const vecY = ParseInterleavedFloat(amountOfInstances)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [vecX[i], vecY[i]]
+                }
+            }
+            if (propertyType == "Vector3") {
+                const vecX = ParseInterleavedFloat(amountOfInstances)
+                const vecY = ParseInterleavedFloat(amountOfInstances)
+                const vecZ = ParseInterleavedFloat(amountOfInstances)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [vecX[i], vecY[i], vecZ[i]]
+                }
+            }
+            if (propertyType == "CFrame") {
+                for(let vi = 0; vi < amountOfInstances; vi++) {
+                    const value = valueHolder[vi] = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]
+                    const type = ReadNewByte()
+
+                    if(type !== 0) {
+                        var facesTable = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]
+                        const right = facesTable[Math.floor((type - 1) / 6)]
+                        const up = facesTable[Math.floor(type - 1) % 6]
+                        const back = [
+                            right[1] * up[2] - up[1] * right[2],
+                            right[2] * up[0] - up[2] * right[0],
+                            right[0] * up[1] - up[0] * right[1]
+                        ]
+
+                        for(let i = 0; i < 3; i++) {
+                            value[3 + i * 3] = right[i]
+                            value[4 + i * 3] = up[i]
+                            value[5 + i * 3] = back[i]
+                        }
+                    } else {
+                        for(let i = 0; i < 9; i++) {
+                            valueHolder[i + 3] = GetByteFloat()
+                        }
+                    }
+                }
+
+                const vecX = ParseInterleavedFloat(amountOfInstances)
+                const vecY = ParseInterleavedFloat(amountOfInstances)
+                const vecZ = ParseInterleavedFloat(amountOfInstances)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i][0] = vecX[i]
+                    valueHolder[i][1] = vecY[i]
+                    valueHolder[i][2] = vecZ[i]
+                }
+            }
+            if (propertyType == "Enum") {
+                valueHolder = UINTInterleaved32(amountOfInstances)
+            }
+            if (propertyType == "Instance") {
+                const refIds = IntInterleaved32(amountOfInstances)
+                var refId = 0
+                for(let i = 0; i < amountOfInstances; i++) {
+                    refId += refIds[i]
+                    valueHolder[i] = refId
+                }
+            }
+            if (propertyType == "NumberSequence") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    const seqLength = ReadNewInt32()
+                    const seq = valueHolder[i] = []
+
+                    for(let j = 0; j < seqLength; j++) {
+                        seq.push({
+                            Time: GetByteFloat(),
+                            Value: GetByteFloat(),
+                            Envelope: GetByteFloat()
+                        })
+                    }
+                }
+            }
+            if (propertyType == "ColorSequence") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    const seqLength = ReadNewInt32()
+                    const seq = valueHolder[i] = []
+
+                    for(let j = 0; j < seqLength; j++) {
+                        seq.push({
+                            Time: GetByteFloat(),
+                            Color: [GetByteFloat(), GetByteFloat(), GetByteFloat()],
+                            EnvelopeMaybe: GetByteFloat()
+                        })
+                    }
+                }
+            }
+            if (propertyType == "NumberRange") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = {
+                        Min: GetByteFloat(),
+                        Max: GetByteFloat()
+                    }
+                }
+            }
+            if (propertyType == "Rect2D") {
+                const x0 = ParseInterleavedFloat(amountOfInstances)
+                const y0 = ParseInterleavedFloat(amountOfInstances)
+                const x1 = ParseInterleavedFloat(amountOfInstances)
+                const y1 = ParseInterleavedFloat(amountOfInstances)
+
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = [x0[i], y0[i], x1[i], y1[i]]
+                }
+            }
+            if (propertyType == "PhysicalProperties") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    const enabled = ReadNewByte() !== 0
+                    valueHolder[i] = {
+                        CustomPhysics: enabled,
+                        Density: enabled ? GetRobloxByteFloat() : null,
+                        Friction: enabled ? GetRobloxByteFloat() : null,
+                        Elasticity: enabled ? GetRobloxByteFloat() : null,
+                        FrictionWeight: enabled ? GetRobloxByteFloat() : null,
+                        ElasticityWeight: enabled ? GetRobloxByteFloat() : null
+                    }
+                }
+            }
+            if (propertyType == "Color3uint8") {
+                function rgbToColor3Uint8(r,g,b,a) {
+                    a = a*255
+                    var stringConvertedToHex = ((a.toString(16)) + (r.toString(16)) + (g.toString(16)) + (b.toString(16)))
+                    var finalNum = parseInt(String(stringConvertedToHex),16)     
+                    return Number(finalNum)
+                }
+                const rgb = GetArray(amountOfInstances * 3)
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = rgbToColor3Uint8(rgb[i], rgb[i + amountOfInstances], rgb[i + amountOfInstances * 2],1)
+                }
+            }
+            if (propertyType == "int64") { // Two's complement
+                const bytes = GetArray(amountOfInstances * 8)
+
+                for(let i = 0; i < amountOfInstances; i++) {
+                    let byte0 = bytes[i + amountOfInstances * 0] * (256 ** 3) + bytes[i + amountOfInstances * 1] * (256 ** 2) +
+                                bytes[i + amountOfInstances * 2] * 256 + bytes[i + amountOfInstances * 3]
+
+                    let byte1 = bytes[i + amountOfInstances * 4] * (256 ** 3) + bytes[i + amountOfInstances * 5] * (256 ** 2) +
+                                bytes[i + amountOfInstances * 6] * 256 + bytes[i + amountOfInstances * 7]
+
+                    const neg = byte1 % 2
+                    byte1 = (byte0 % 2) * (2 ** 31) + (byte1 + neg) / 2
+                    byte0 = Math.floor(byte0 / 2)
+
+                    if(byte0 < 2097152) {
+                        const value = byte0 * (256 ** 4) + byte1
+                        valueHolder[i] = String(neg ? -value : value)
+                    } else {
+                        let result = ""
+
+                        while(byte1 || byte0) {
+                            const cur0 = byte0
+                            const res0 = cur0 % 10
+                            byte0 = (cur0 - res0) / 10
+
+                            const cur1 = byte1 + res0 * (256 ** 4)
+                            const res1 = cur1 % 10
+                            byte1 = (cur1 - res1) / 10
+
+                            result = res1 + result
+                        }
+
+                        valueHolder[i] = (neg ? "-" : "") + (result || "0")
+                    }
+                }
+            }
+            if (propertyType == "SharedString") {
+                const indices = UINTInterleaved32(amountOfInstances)
+
+                for(let i = 0; i < amountOfInstances; i++) {
+                    //valueHolder[i] = parser.sharedStrings[indices[i]].value
+                }
+            }
+            if (propertyType == "UniqueId") {
+                const bytes = ProcessRbxInterleaved((decompressedData.length-processIndex), 16)
+
+                for(let i = 0; i < amountOfInstances; i++) {
+                    valueHolder[i] = bytes[i].map(x => ("0" + x.toString(16)).slice(-2)).join("")
+                }
+
+            }
+            if (propertyType == "UnknownScriptFormat") {
+                for(let i = 0; i < amountOfInstances; i++) {
+                    //valueHolder[i] = `<${typeName || "Unknown"}>`
+                }
+            }
+            
+            if(isOptional) {
+                if(propertiesString[ReadNewByte()] !== "bool" || (decompressedData.length-processIndex) !== amountOfInstances) {
+                    isOptional = false
+                    for(let i = 0; i < amountOfInstances; i++) {
+                        valueHolder[i] = `<Optional>`
+                    }
+                }
+            }
+            for(const [index, value] of Object.entries(valueHolder)) {
+                if(isOptional) {
+                    if(ReadNewByte() === 0) {
+                        continue
+                    }
+                }
+                if (groupHolder.Objects[index] != undefined) {
+                    groupHolder.Objects[index].Properties[propertyName] = {Value: value, Type: resultTypeName}
+                }
+            }
+            
+        }
+    }
+
+    function GetString(stringLength) {
+        var beforeIndex = currentIndex
+        currentIndex = currentIndex + stringLength
+        var shrunkBuffer = new Uint8Array(decompressionArray.buffer, beforeIndex, stringLength)
+        return Utf8ArrayToStr(shrunkBuffer)
+    }
+    
+    // Comparing the first 16 bytes indentifing the file as RBLX
+
+    var comparison = Match([0x3C, 0x72, 0x6F, 0x62, 0x6C, 0x6F, 0x78, 0x21, 0x89, 0xFF, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00])
+    const groupsCount = ReadInt32()
+    const instancesCount = ReadInt32()
+    currentIndex += 8
+    while ((decompressionArray.length-currentIndex) >= 4) {
+        var typeChunk = GetString(4)
+        var textEncode = new TextEncoder()
+        var Utf8Version = textEncode.encode(typeChunk)
+        var check = (Utf8Version[0] == 69 && Utf8Version[1] == 78 && Utf8Version[2] == 68 && Utf8Version[3] == 0)
+        
+        if (check == true) {
+            break
+        } else {
+            var decompressed = decompressLZ4()
+            handleItemType(decompressed,typeChunk)
+        }
+    }
+        
+    console.log('[DEBUG] Finished parsing RBLX binary format')
+    console.log('[DEBUG] Compiling into RBXLX xml format to be read')
+    
+    var istanceKeysYE = Object.keys(instances)
+    Object.values(instances).forEach(function(instance,index) {
+        var objectNum = istanceKeysYE[index]
+        if (instance.Properties != undefined) {
+            if (instance.Properties.Parent != undefined) {
+                instances[instance.Properties.Parent.Value].Children.push(objectNum)
+            }
+        }
+    })
+    
+    var emptyFile = readXml('<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4"></roblox>')
+    var documentConvert = emptyFile.getElementsByTagName("roblox")[0]
+
+    function checkIfObjectIsAChild(id) {
+        var isAChild = false
+        var instanceKeys = Object.keys(instances)
+        Object.values(instances).forEach(function(instance,index) {
+            var objectNum = instanceKeys[index]
+            if (instance.Children != undefined) {
+                instance.Children.forEach(function(child) {
+                    if (child == id) {
+                        isAChild = true
+                    }
+                })
+            }
+        })
+        return isAChild
+    }
+
+    function organizeCframe(elementString,property,type) {
+        if (Array.isArray(elementString) != true) {
+            property.textContent = '<unable to be converted>'
+            return
+        }
+        var listNames = ['X','Y','Z','R00','R01','R02','R10','R11','R12','R20','R21','R22']
+        if (type == 'Color3') {
+            listNames = ['R','G','B']
+        }
+        elementString.forEach(function(value,index) {
+            var tagName = listNames[index]
+            var objectCframe = emptyFile.createElement(tagName)
+            objectCframe.textContent = value
+            property.appendChild(objectCframe)
+        })
+    }
+    
+    function generateRefferent(id) {
+        var refYE = 'RBX' + makeid(32)
+        return refYE
+    }
+    
+    function handleAndCreateObject(objectNum,elementToAppend) {
+        var instance = instances[objectNum]
+        var referent = instance.referent
+        var instanceXML = emptyFile.createElement('Item')
+        instanceXML.setAttribute('class', instance.ClassName)
+        instanceXML.setAttribute('referent',referent)
+        elementToAppend.appendChild(instanceXML)
+        // Properties
+        var propertiesHolder = emptyFile.createElement('Properties')
+        var propKeys = Object.keys(instance.Properties)
+        Object.values(instance.Properties).forEach(function(property,index4) {
+            var name = propKeys[index4]
+            if (name != 'Parent') {
+                if (property.Type == 'CFrame') {
+                    property.Type = 'CoordinateFrame'
+                }
+                if (property.Type == 'string' && name == 'Source') {
+                    property.Type = 'ProtectedString'
+                }
+                if (property.Type == 'Enum') {
+                    property.Type = 'token'
+                }
+                if (name == 'Texture') {
+                    property.Type = 'Content'
+                }
+                if (name == 'AttributesSerialize' || name == 'MaterialColors' || name == 'PhysicsGrid' || name == 'SmoothGrid' || name == 'Tags') {
+                    property.Type = 'BinaryString'
+                }
+                if (property.Type == 'BinaryString') {
+                    if (name != 'MaterialColors') {
+                        var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
+                        var base64encode = Base64.encode(property.Value)
+                        property.Value = base64encode
+                    } else {
+                        property.Value = '<![CDATA[AAAAAAAAan8/P39rf2Y/ilY+j35fi21PZmxvZbDqw8faiVpHOi4kHh4lZlw76JxKc3trhHtagcLgc4RKxr21zq2UlJSM]]>'
+                    }
+                }
+                var object = emptyFile.createElement(property.Type)
+                object.setAttribute('name', name)
+                if (typeof(property.Value) == 'object') {
+                    if (Array.isArray(property.Value) == true) {
+                        organizeCframe(property.Value,object,property.Type)
+                    } else {
+                        var loopThroughKeys = Object.keys(property.Value)
+                        Object.values(property.Value).forEach(function(valueOfObjInTab,index84) {
+                            var keyOfObj = loopThroughKeys[index84]
+                            if (valueOfObjInTab != null) {
+                                var objectProp = emptyFile.createElement(keyOfObj)
+                                objectProp.textContent = valueOfObjInTab
+                                object.appendChild(objectProp)
+                            }
+                        })
+                    }
+                } else {
+                    object.textContent = property.Value
+                }
+                propertiesHolder.appendChild(object)
+            }
+        })
+        instanceXML.appendChild(propertiesHolder)
+        Object.values(instance.Children).forEach(function(objectNum2) {
+            var refYE = String('RBX' + makeid(32))
+            objectNum2 = String(objectNum2)
+            var instance4 = instances[objectNum2]
+            var referent4 = 'RBX' + refYE.toUpperCase()
+            instances[objectNum2].referent = referent4
+            handleAndCreateObject(objectNum2,instanceXML)
+        })
+    }
+    
+    var istanceKeysYE2 = Object.keys(instances)
+
+    Object.values(instances).forEach(function(instance,index) {
+        var objectNum = istanceKeysYE2[index]
+        var isA = checkIfObjectIsAChild(objectNum)
+        if (isA == false) {
+            var referent = 'RBX' + String(generateRefferent(objectNum)).toUpperCase()
+            instances[objectNum].referent = referent
+            handleAndCreateObject(objectNum,documentConvert)
+        }
+    })
+    const serializer = new XMLSerializer();
+    const finishedDocument = serializer.serializeToString(emptyFile);
+    return emptyFile
+    
+    
+    function GetNewArray(lengthArray) {
+        const result = new Uint8Array(decompressedData.buffer, currentIndex, lengthArray)
+        currentIndex += lengthArray
+        return result
+    }
+    
+    function decompressLZ4() {
+        // Reading and decompressing LZ4 bytes to be used
+        /*
+        var CompressedLen = ReadInt32()
+        var DecompressedLen = ReadInt32()
+        currentIndex += 4
+        const start = currentIndex
+		const end = start + CompressedLen
+        const data = new Uint8Array(DecompressedLen)
+        var TotalDecompressed = 0
+        while (currentIndex < end) {
+            var TokenByte = ReadByte()
+            var LiteralLen = TokenByte >>> 4
+            var MatchLen = TokenByte & 0xF
+            if (LiteralLen == 0xF) {
+                do {
+                    var LastByte = ReadByte()
+                    LiteralLen += LastByte
+                } while (LastByte == 0xFF)
+            }
+
+            for(let i = 0; i < LiteralLen; i++) {
+                data[TotalDecompressed++] = ReadByte()
+            }
+
+			if (currentIndex < end) {
+                var Offset = ReadInt16()
+                const Beginning = TotalDecompressed - Offset
+                if (MatchLen == 0xF) {
+                    do {
+                        var LenByte = ReadByte()
+                        MatchLen += LenByte
+                    } while (LenByte == 0xF)
+                }
+
+                MatchLen += 4
+                for(let i = 0; i < MatchLen; i++) {
+                    data[TotalDecompressed++] = data[Beginning + i]
+                }
+            }
+        }
+        return data
+        */
+        const comLength = ReadInt32()
+		const decomLength = ReadInt32()
+		currentIndex += 4
+
+		if(comLength === 0) { // TOOD: This path is actually not supported by Roblox, may have to take a look at some point?
+			return GetNewArray(decomLength)
+		}
+		
+		const start = currentIndex
+		const end = start + comLength
+		const data = new Uint8Array(decomLength)
+		let index = 0
+
+		while(currentIndex < end) {
+			const token = ReadByte()
+			let litLen = token >>> 4
+
+			if(litLen === 0xF) {
+				while(true) {
+					const lenByte = ReadByte()
+					litLen += lenByte
+					if(lenByte !== 0xFF) { break }
+				}
+			}
+			
+			for(let i = 0; i < litLen; i++) {
+				data[index++] = ReadByte()
+			}
+
+			if(currentIndex < end) {
+				const offset = ReadInt16()
+				const begin = index - offset
+				
+				let len = token & 0xF
+
+				if(len === 0xF) {
+					while(true) {
+						const lenByte = ReadByte()
+						len += lenByte
+						if(lenByte !== 0xFF) { break }
+					}
+				}
+
+				len += 4
+				
+				for(let i = 0; i < len; i++) {
+					data[index++] = data[begin + i]
+				}
+			}
+		}
+		
+		return data
+    }
+}
+
 async function loadExplorer() { 
-    var file = ''
+    var file = undefined
     var file2 = ''
     var placeSource = ''
     const cookies = new URLSearchParams(document.cookie.replaceAll('; ', '&'));
@@ -2111,7 +2967,7 @@ async function loadExplorer() {
                 file = res.responseText
             } else {
                 await new Promise(r => setTimeout(r, 800));
-                document.getElementById('convertText').innerHTML = 'Converting binary to xml...<br> <b><a href="https://www.matthewdean.com/roblox-file-converter">https://www.matthewdean.com/roblox-file-converter</a></b>'
+                document.getElementById('convertText').innerHTML = 'Converting binary to xml...'
                 MakeRobloxRequest('/assetURL','POST', JSON.stringify({id: cookies.get('dataYE').split('|')[0]}),true,function(is,res) {
                     var bodyYE = JSON.parse(res.responseText)
                     if (bodyYE.locations != undefined) {
@@ -2127,20 +2983,21 @@ async function loadExplorer() {
                                     file = decoded
                                     return
                                 }
-                                var thing = handleArrayBuffer(xhr.response);
+                                console.log(xhr.response)
+                                var thing = procesLZ4(xhr.response);
                                 if (thing != false) {
-                                    document.getElementById('convertText').innerHTML = 'Converted; loading explorer...<br> <b><a href="https://www.matthewdean.com/roblox-file-converter">https://www.matthewdean.com/roblox-file-converter</a></b>'
-                                    file = thing.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
+                                    document.getElementById('convertText').innerHTML = 'Converted; loading explorer...'
+                                    file = thing//.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
                                 } else {
                                     var thingYE = document.getElementsByClassName('spinner-border text-primary')[0]
                                     thingYE.className = ''
                                     thingYE.style.transition = '0.25s all linear'
-                                    thingYE.style.textAlign = 'center'
+                                    thingYE.style.textAlignp0 = 'center'
                                     thingYE.style.color = 'red'
                                     thingYE.style.borderRightColor = 'red'
                                     await new Promise(r => setTimeout(r, 350));
                                     thingYE.style.animation = '.1s linear forwards size2 1.25s'
-                                    document.getElementById('convertText').innerHTML = 'Conversion failed<br> <b><a href="https://www.matthewdean.com/roblox-file-converter">https://www.matthewdean.com/roblox-file-converter</a></b>'
+                                    document.getElementById('convertText').innerHTML = 'Conversion failed'
                                     thingYE.innerHTML = `
                                     <span style="
                                     font-size: 35px;
@@ -2154,7 +3011,7 @@ async function loadExplorer() {
             }
         })
         while (true) {
-            if (file.length > 0) {
+            if (file != undefined) {
                 break
             }
             await new Promise(r => setTimeout(r, 10));
@@ -2171,7 +3028,11 @@ async function loadExplorer() {
         .then(textString => {
             file2 = textString
         });
-    xmlFormatted = readXml(file)
+    if (typeof(file) == 'string') {
+        xmlFormatted = readXml(file)
+    } else {
+        xmlFormatted = file
+    }
     xmlFormatted2 = readXml(file2)
     document.body.onclick = function() {
         if (document.getElementById('chooser')) {
@@ -2270,7 +3131,7 @@ async function loadExplorer() {
     }
     document.getElementById('allBeforeLoad').style = 'transition: 1s all linear; opacity: 0; position: absolute; width: 100%; height: 100%; top: -100%; transform: rotateX(-90deg);'
     await new Promise(r => setTimeout(r, 1000));
-    const controls = new THREE.OrbitControls(camera, renderer.domElement)
+    controls = new THREE.OrbitControls(camera, renderer.domElement)
     document.getElementById('container').style.display = 'none'
     document.getElementById('allBeforeLoad').style = 'position: absolute; transition: 1s all linear; opacity: 1; top: 0px; width: 100%; height: 100%; transform: rotateX(0deg);'
     document.getElementById('thingYEet').style = document.getElementById('thingYEet').getAttribute('style') + ' opacity: 0; top: 100%; transform: rotateX(90deg);'

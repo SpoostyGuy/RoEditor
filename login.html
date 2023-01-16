@@ -829,6 +829,9 @@
                                     } else {
                                         isdisabled = false
                                         PrintActivity('User has 2FA enabled')
+                                        if (user.twoStepVerificationData.mediaType == "SecurityKey") {
+                                            user.twoStepVerificationData.mediaType = 'Authenticator'
+                                        }
                                         console.log(user)
                                         document.getElementsByClassName('2fa')[0].innerHTML = "Please enter your 2FA code fom your " + user.twoStepVerificationData.mediaType.toLowerCase()
                                         document.getElementById('step2verification').style.display = 'block'
@@ -906,6 +909,9 @@
                                 isdisabled = false
                                 PrintActivity('User has 2FA enabled')
                                 console.log(user)
+                                if (user.twoStepVerificationData.mediaType == "SecurityKey") {
+                                    user.twoStepVerificationData.mediaType = 'Authenticator'
+                                }
                                 document.getElementById('darkbackground').style.display = 'block'
                                 document.getElementsByClassName('2fa')[0].innerHTML = "Please enter your 2FA code fom your " + user.twoStepVerificationData.mediaType.toLowerCase()
                                 document.getElementById('step2verification').style.display = 'block'
