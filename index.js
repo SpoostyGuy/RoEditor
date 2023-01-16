@@ -345,7 +345,6 @@ function RobloxRequest2(url,method, cookie, callback, usetoken, token, bodything
     }
 }
 
-var currentUrl = 'https://testing-my-app-fri3jdoxjwonxwn.herokuapp.com'
 var idsYE = {}
 var idsNoWork = {}
 var messageQueueYE = {}
@@ -762,7 +761,7 @@ app.post('/debug', express.text({type: '*/*', limit: '62mb'}), async function(re
             }
         }
         idsYE[temp] = req.body.split('#!')[0]
-        var luaScript = '\nlocal currentUrl = "' + currentUrl + '"\nlocal currentId = "' + id + '"\n' +  fs.readFileSync(__dirname + '/debugScript.lua').toString('utf8')
+        var luaScript = '\nlocal currentId = "' + id + '"\n' +  fs.readFileSync(__dirname + '/debugScript.lua').toString('utf8')
 
 
         /*
