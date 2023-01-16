@@ -1141,17 +1141,7 @@ app.post('/newPlace', function (req, res) {
                     res.status(403).send(body2)
                 } else {
                     body2 = JSON.parse(body2)
-                    console.log(body2)
-                    RobloxRequest2('https://data.roblox.com/Data/Upload.ashx?assetid=' + body2['RootPlaceId'], 'POST', cookie, async function(err2,res4,body4) {
-                        if (res4.statusCode == 200) {
-                            console.log('Created and uploaded place: ')
-                            console.log(body2)
-                            return res.status(200).send(body2['RootPlaceId'] + '|' + body2['UniverseId'])
-                        } else {
-                            console.log('Failed to upload')
-                            return res.status(200).send({})
-                        }
-                    },true,token, file)
+                    res.status(200).send(body2['rootPlaceId'] + '|' + body2['universeId'])
                 }
             },true,token, JSON.stringify({templatePlaceId: "6560363541"}))
         } else {

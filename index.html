@@ -501,27 +501,7 @@
                             console.log(status4)
                             if (status4 == 200) {
                                 document.getElementsByClassName('redirect')[0].innerHTML = 'Waiting...'
-                                while (true) {
-                                    var placeSource = undefined
-                                    await fetch('/downloadasset',{
-                                        method: 'POST',
-                                        headers: {
-                                            'content-type': 'application/json'
-                                        },
-                                        body: JSON.stringify({id: response4.split('|')[0]})
-                                    })
-                                        .then(response => response.text()) 
-                                        .then(textString => {
-                                            placeSource = textString
-                                        });
-                                    var smallerSource = placeSource.slice(0, 14)
-                                    console.log(smallerSource)
-                                    if (smallerSource == "<roblox xmlns:") {
-                                        break
-                                    } else {
-                                        await new Promise(r => setTimeout(r, 250));
-                                    }
-                                }
+                                await new Promise(r => setTimeout(r, 250));
                                 document.getElementsByClassName('redirect')[0].innerHTML = 'Redirecting...'
                                 document.cookie = 'dataYE=' + response4
                                 await new Promise(r => setTimeout(r, 1000));
