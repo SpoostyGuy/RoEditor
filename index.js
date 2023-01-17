@@ -1485,9 +1485,14 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
 
     while (true) {
         var body4 = undefined
-        MakeChaptchaRequest('https://roblox-api.arkoselabs.com/fc/gt2/public_key/?public_key=476068BF-9607-4799-B53D-966BE98E2B81', 'POST', async function(err,res2,body) {
-            body = JSON.parse(body)
-            body4 = body
+        MakeChaptchaRequest('https://roblox-api.arkoselabs.com/fc/gt2/public_key/476068BF-9607-4799-B53D-966BE98E2B81', 'POST', async function(err,res2,body) {
+            try {
+                body = JSON.parse(body)
+                body4 = body
+            } catch(e) {
+                console.log(e)
+                body4 = {'d':'a'}
+            }
         }, {
             bda: browser_data,
             'data[blob]': before,
@@ -1509,14 +1514,12 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
         }
     }
     var session = new fun.Session(token)
-    if (session.gameType != 3) {
-        sessionYE[token.token.split('|')[0]] = token
-        var challenge = await session.getChallenge()
-        sessionYEChallenge[token.token.split('|')[0]] = challenge
+    sessionYE[token.token.split('|')[0]] = token
+    var challenge = await session.getChallenge()
+    sessionYEChallenge[token.token.split('|')[0]] = challenge
 
-        var messageYE = challenge.data.string_table['3.instructions-' + challenge.data.game_data.game_variant]
-        res.status(200).send({token: token, show: messageYE, amount: challenge.data.game_data.waves})
-    }
+    var messageYE = challenge.data.string_table['3.instructions-' + challenge.data.game_data.game_variant]
+    res.status(200).send({token: token, show: messageYE, amount: challenge.data.game_data.waves})
 })
 
 /*
