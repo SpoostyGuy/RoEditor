@@ -20,6 +20,20 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
 
+var localURL = 'https://ro-editor.vercel.app//'
+var totalProxyLinks =  [
+  'c6.rbxcdn.com', 't5.rbxcdn.com',
+  'c3.rbxcdn.com', 'css.rbxcdn.com',
+  'c7.rbxcdn.com', 'c2.rbxcdn.com',
+  'c5.rbxcdn.com', 'c4.rbxcdn.com',
+  'c1.rbxcdn.com', 't3.rbxcdn.com',
+  't2.rbxcdn.com', 'tr.rbxcdn.com',
+  't1.rbxcdn.com', 'js.rbxcdn.com',
+  'c0.rbxcdn.com', 't6.rbxcdn.com',
+  't4.rbxcdn.com', 't7.rbxcdn.com',
+  't0.rbxcdn.com', 'apis.rbxcdn.com'
+]
+
 app.set('trust proxy', true)
 
 // doesn't error when there is a parsing error
@@ -30,6 +44,223 @@ app.use((err, req, res, next) => {
     }
     next();
 });
+
+
+async function checkIfUserNameWasTaken(username) {
+    var bodyReq = JSON.stringify({birthday: "1975-01-01T05:00:00.000Z", context: "Signup", username: username})
+    var validity = undefined
+    request.post('https://auth.roblox.com/v1/usernames/validate', {
+        headers: {
+            'content-type': 'application/json',
+            'content-length': bodyReq.length
+        },
+        body: bodyReq
+    }, async function(err,res,body) {
+        var token = res.headers['x-csrf-token']
+        request.post('https://auth.roblox.com/v1/usernames/validate', {
+            headers: {
+                'content-type': 'application/json',
+                'content-length': bodyReq.length,
+                'x-csrf-token': token
+            },
+            body: bodyReq
+        }, async function(err2,res2,body2) {
+            var jsonBody = JSON.parse(body2)
+            validity = (jsonBody.code == 0)
+        })
+    })
+    while (true) {
+        if (validity != undefined) {
+            break
+        }
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    return validity
+}
+
+async function generateGuestUsername() {
+    var namePrefix = 'Guest'
+    var nameWork = undefined
+    while (true) {
+        var characters ='0123456789';
+        var result = '';
+        var charactersLength = characters.length;
+        for ( let i = 0; i < 7; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        var name = namePrefix + result
+        var isAble = await checkIfUserNameWasTaken(name)
+        if (isAble == true) {
+            nameWork = name
+            break
+        }
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    return nameWork
+}
+
+async function retrieveAgreementIds() {
+    var agreementIds = undefined
+    request.get('https://apis.roblox.com/user-agreements/v1/agreements-resolution/web', async function(err2,res2,body2) {
+        var jsonBody = JSON.parse(body2)
+        var agreement = []
+        jsonBody.forEach(function(data) {
+            agreement.push(data.id)
+        })
+        agreementIds = agreement
+    })
+    while (true) {
+        if (agreementIds != undefined) {
+            break
+        }
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    return agreementIds
+}
+
+async function assembleSignupBody(capToken,capId) {
+    var username = await generateGuestUsername()
+    var agreementIds = await retrieveAgreementIds()
+    
+    var length = Math.round(Math.max((Math.random()*100),8))
+    
+    var characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var password = '';
+    var charactersLength = characters.length;
+    for ( let i = 0; i < length; i++ ) {
+        password += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    
+    var body = {
+        "username":username,
+        "password": password,
+        "birthday":"1975-01-01T05:00:00.000Z",
+        "gender":2,
+        "isTosAgreementBoxChecked":true,
+        "captchaId": capId,
+        "captchaToken": capToken,
+        "agreementIds": agreementIds
+    }
+    
+    return body
+}
+
+//{"username":"udiy802dhiu22","password":"209eu2d0dj2de82he2hdueihqdwilhiulewhd2eiulhdeiulhaiuldwhaiuwldhwalunkjsawnxwiulaxnwiulk","birthday":"1993-03-02T05:00:00.000Z","gender":2,"isTosAgreementBoxChecked":true,"captchaId":"rvyAHHq9azRcB4xFx75A44","captchaToken":"8671748b75d53f3b1.7047459101|r=us-east-1|meta=3|metabgclr=transparent|metaiconclr=%23757575|maintxtclr=%23b8b8b8|guitextcolor=%23474747|pk=A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F|at=40|sup=1|rid=6|ht=1|ag=101|cdn_url=https%3A%2F%2Fclient-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com|surl=https%3A%2F%2Fclient-api.arkoselabs.com|smurl=https%3A%2F%2Fclient-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager","agreementIds":["54d8a8f0-d9c8-4cf3-bd26-0cbf8af0bba3","848d8d8f-0e33-4176-bcd9-aa4e22ae7905"]}
+var bda = require('./node_modules/funcaptcha/lib/util')
+
+async function makeSignupReq(capToken,capId) {
+    var bodyReq = await assembleSignupBody(capToken,capId)
+    bodyReq = JSON.stringify(bodyReq)
+    var validity = undefined
+    var thingWait = undefined
+    var chaptchaId = undefined
+    var loggedInMessage = undefined
+    request.post('https://auth.roblox.com/v2/signup', {
+        headers: {
+            'content-type': 'application/json',
+            'content-length': bodyReq.length
+        },
+        body: bodyReq
+    }, async function(err,res,body) {
+        var token = res.headers['x-csrf-token']
+        request.post('https://auth.roblox.com/v2/signup', {
+            headers: {
+                'content-type': 'application/json',
+                'content-length': bodyReq.length,
+                'x-csrf-token': token,
+                'user-agent': 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+                "origin": "http://www.roblox.com",
+                "referer": "http://www.roblox.com/"
+            },
+            body: bodyReq
+        }, async function(err2,res2,body2) {
+            body2 = JSON.parse(body2)
+            if (body2.errors != undefined) {
+                if (body2.errors[0].code == 2) {
+                    chaptchaId = body2.errors[0].fieldData.split(',')[0]
+                    var chaptchaBda = body2.errors[0].fieldData.split(',')[1]
+                    var before = chaptchaBda
+
+                    var token = undefined
+                    var browser_data = bda.default.getBda('Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36','https://www.roblox.com/','https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html')
+
+                    while (true) {
+                        var body4 = undefined
+                        MakeChaptchaRequest('https://client-api.arkoselabs.com/fc/gt2/public_key/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F', 'POST', async function(err,res2,body) {
+                            try {
+                                body = JSON.parse(body)
+                                body4 = body
+                            } catch(e) {
+                                console.log(e)
+                                body4 = {'d':'a'}
+                            }
+
+                        }, {
+                            bda: browser_data,
+                            'data[blob]': before,
+                            'capi_version': '10.0.3',
+                            'capi_mode': 'inline',
+                            'style_theme': 'default',
+                            public_key: 'A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F',
+                            site: 'https://www.roblox.com',
+                            userbrowser: 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+                            rnd: Math.random()
+                        })
+                        while (true) {
+                            if (body4 != undefined) {
+                                break
+                            }
+                            await new Promise(r => setTimeout(r, 10));
+                        }
+                        if (body4.token != undefined) {
+                            token = body4
+                            break
+                        }
+                    }
+
+                    thingWait = token
+                }
+            } else {
+                loggedInMessage = {loginBody: body2, headers: res2.headers}
+                thingWait = 'a'
+            }
+        })
+    })
+    while (true) {
+        if (thingWait != undefined) {
+            break
+        }
+        await new Promise(r => setTimeout(r, 10));
+    }
+    if (loggedInMessage == undefined) {
+        return {jsonToken: thingWait, chaptchaId: chaptchaId}
+    } else {
+        return loggedInMessage
+    }
+}
+
+app.post('/getGuestCaptcha', async function(req,res) {
+    var capToken = undefined
+    var capId = undefined
+    if (req.body.capToken != undefined && req.body.capId != undefined) {
+        capToken = req.body.capToken
+        capId = req.body.capId
+    }
+    var dataReturn = await makeSignupReq(capToken,capId)
+    if (dataReturn.loginBody != undefined) {
+        dataReturn.headers['set-cookie'].forEach(function(val,index) {
+            if (val.split('=')[0] == '.ROBLOSECURITY') {
+                indexYE = index
+            }
+        })
+        if (dataReturn.headers['set-cookie'] != undefined) {
+            res.header("main-cookie", dataReturn.headers['set-cookie'][indexYE].split('=')[1].split(';')[0]);
+        }
+        return res.status(200).send(dataReturn.loginBody)
+    } else {
+        return res.status(200).json(dataReturn)
+    }
+})
 
 function RobloxRequest(url,method, cookie, callback, usetoken, token, bodything) {
     if (usetoken === true) {
@@ -1203,6 +1434,9 @@ app.post('/assetURL', function (req, res) {
         return res.status(200).send({})
     }
     RobloxRequest('https://assetdelivery.roblox.com/v2/asset?id=' + req.body.id, 'GET', cookie, function(err,res2,body4) {
+        totalProxyLinks.forEach(function(url) {
+            body4 = body4.replaceAll('https://' + url + '/', localURL + 'proxyCDN?ur=' + url.split('.')[0] + '&id=')
+        })
         res.status(200).send(body4)
     })
 })
@@ -1244,6 +1478,9 @@ app.post('/loadthumbnails', function(req,res) {
     }
 
     RobloxRequest('https://thumbnails.roblox.com/v1/games/icons?universeIds=' + data + '&size=256x256&format=Png&isCircular=false&returnPolicy=AutoGenerated', 'GET', cookie, function(err,res2,body) {
+        totalProxyLinks.forEach(function(url) {
+            body = body.replaceAll('https://' + url + '/', localURL + 'proxyCDN?ur=' + url.split('.')[0] + '&id=')
+        })
         res.status(200).send(body)
     })
 
@@ -1257,6 +1494,23 @@ app.post('/loadhead', function(req,res) {
     }
 
     RobloxRequest('https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=' + req.body.id + '&size=150x150&format=png', 'GET', '', function(err,res2,body) {
+        totalProxyLinks.forEach(function(url) {
+            body = body.replaceAll('https://' + url + '/', localURL + 'proxyCDN?ur=' + url.split('.')[0] + '&id=')
+        })
+        res.status(200).send(body)
+    })
+
+})
+
+app.get('/proxyCDN', function(req,res) {
+    if (req.query.id === undefined) {
+        return res.status(200).send({})
+    }
+    if (req.query.ur === undefined) {
+        return res.status(200).send({})
+    }
+
+    request.get({url:'https://' + req.query.ur + '.rbxcdn.com/' + req.query.id , encoding:null}, function (error, response, body) {
         res.status(200).send(body)
     })
 
@@ -1456,15 +1710,15 @@ function MakeChaptchaRequest(url,method,callback,body,urlencoded) {
             'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'dnt': 1,
-            'origin': 'https://www.roblox.com',
-            'referer': 'https://www.roblox.com/',
-            'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+            'origin': 'https://client-api.arkoselabs.com',
+            'pragma': 'no-cache',
+            'referer': 'https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html ',           'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Chrome OS"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'cross-site',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36',
+            'user-agent': 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
         },
         url: url,
         method: method,
@@ -1472,16 +1726,57 @@ function MakeChaptchaRequest(url,method,callback,body,urlencoded) {
     }, callback)
 }
 
-
-var bda = require('./node_modules/funcaptcha/lib/util')
+function genBDA() {
+    var baseString = '[{"key":"api_type","value":"js"},{"key":"p","value":1},{"key":"f","value":"a249c6ceeb5bfd552237f76f35331055"},{"key":"n","value":"MTY3OTM0NzEyMw=="},{"key":"wh","value":"1f303ac590eccf59508af545918dd5f4|72627afbfd19a741c7da1732218301ac"},{"key":"enhanced_fp","value":[{"key":"webgl_extensions","value":"ANGLE_instanced_arrays;EXT_blend_minmax;EXT_disjoint_timer_query;EXT_float_blend;EXT_texture_filter_anisotropic;EXT_sRGB;OES_element_index_uint;OES_fbo_render_mipmap;OES_standard_derivatives;OES_vertex_array_object;WEBGL_compressed_texture_astc;WEBGL_compressed_texture_etc;WEBGL_compressed_texture_etc1;WEBGL_debug_renderer_info;WEBGL_debug_shaders;WEBGL_depth_texture;WEBGL_lose_context;WEBGL_multi_draw"},{"key":"webgl_extensions_hash","value":"1b4e095c6f5fb914cbb22a8cb0460f75"},{"key":"webgl_renderer","value":"WebKit WebGL"},{"key":"webgl_vendor","value":"WebKit"},{"key":"webgl_version","value":"WebGL 1.0 (OpenGL ES 2.0 Chromium)"},{"key":"webgl_shading_language_version","value":"WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)"},{"key":"webgl_aliased_line_width_range","value":"[1, 4095.9375]"},{"key":"webgl_aliased_point_size_range","value":"[1, 1024]"},{"key":"webgl_antialiasing","value":"yes"},{"key":"webgl_bits","value":"8,8,24,8,8,0"},{"key":"webgl_max_params","value":"16,96,16383,4096,16383,16,16383,31,32,16,4096"},{"key":"webgl_max_viewport_dims","value":"[16383, 16383]"},{"key":"webgl_unmasked_vendor","value":"ARM"},{"key":"webgl_unmasked_renderer","value":"Mali-G72"},{"key":"webgl_vsf_params","value":"23,127,127,10,15,15,10,15,15"},{"key":"webgl_vsi_params","value":"0,31,30,0,15,14,0,15,14"},{"key":"webgl_fsf_params","value":"23,127,127,10,15,15,10,15,15"},{"key":"webgl_fsi_params","value":"0,31,30,0,15,14,0,15,14"},{"key":"webgl_hash_webgl","value":"01af72ec161261de369af4087a5927b2"},{"key":"user_agent_data_brands","value":"Chromium,Not A(Brand,Google Chrome"},{"key":"user_agent_data_mobile","value":false},{"key":"navigator_connection_downlink","value":10.0},{"key":"navigator_connection_downlink_max","value":null},{"key":"network_info_rtt","value":50},{"key":"network_info_save_data","value":false},{"key":"network_info_rtt_type","value":"ethernet"},{"key":"screen_pixel_depth","value":24},{"key":"navigator_device_memory","value":4},{"key":"navigator_languages","value":"en-US"},{"key":"window_inner_width","value":0},{"key":"window_inner_height","value":0},{"key":"window_outer_width","value":808},{"key":"window_outer_height","value":909},{"key":"browser_detection_firefox","value":false},{"key":"browser_detection_brave","value":false},{"key":"audio_codecs","value":"{\"ogg\":\"probably\",\"mp3\":\"probably\",\"wav\":\"probably\",\"m4a\":\"maybe\",\"aac\":\"probably\"}"},{"key":"video_codecs","value":"{\"ogg\":\"probably\",\"h264\":\"probably\",\"webm\":\"probably\",\"mpeg4v\":\"\",\"mpeg4a\":\"\",\"theora\":\"\"}"},{"key":"media_query_dark_mode","value":true},{"key":"headless_browser_phantom","value":false},{"key":"headless_browser_selenium","value":false},{"key":"headless_browser_nightmare_js","value":false},{"key":"document__referrer","value":"https://www.roblox.com/"},{"key":"window__ancestor_origins","value":["https://www.roblox.com","https://www.roblox.com"]},{"key":"window__tree_index","value":[0,0]},{"key":"window__tree_structure","value":"[[[]]]"},{"key":"window__location_href","value":"https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html"},{"key":"client_config__sitedata_location_href","value":"https://www.roblox.com/arkose/iframe"},{"key":"client_config__surl","value":"https://client-api.arkoselabs.com"},{"key":"client_config__language","value":null},{"key":"navigator_battery_charging","value":true},{"key":"audio_fingerprint","value":"124.04347527516074"}]},{"key":"fe","value":["DNT:1","L:en-US","D:24","PR:1.068750023841858","S:1616,909","AS:1616,909","TO:240","SS:true","LS:true","IDB:true","B:false","ODB:true","CPUC:unknown","PK:Linux x86_64","CFP:497360422","FR:false","FOS:false","FB:false","JSF:","P:Chrome PDF Viewer,Chromium PDF Viewer,Microsoft Edge PDF Viewer,PDF Viewer,WebKit built-in PDF","T:10,false,false","H:8","SWF:false"]},{"key":"ife_hash","value":"e425c0dd771a0acf1582cfdc37202b65"},{"key":"cs","value":1},{"key":"jsbd","value":"{\"HL\":4,\"DT\":\"\",\"NWD\":\"false\",\"DOTO\":1,\"DMTO\":1}"}]'
+    let time = new Date().getTime() / 1000;
+    let key = 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36' + Math.round(time - (time % 21600));
+    const crypto_1 = require("crypto");
+    const alphabet = "abcdefghijklmnopqrstuvwxyz";
+    let md5 = (0, crypto_1.createHash)("md5");
+    function encrypt(data, key) {
+        let salt = "";
+        let salted = "";
+        let dx = Buffer.alloc(0);
+        salt = Array(8)
+            .fill(0)
+            .map((v) => alphabet[Math.floor(Math.random() * alphabet.length)])
+            .join(""); // 8 random letters
+        data =
+            data +
+            Array(17 - (data.length % 16)).join(String.fromCharCode(16 - (data.length % 16))); // Padding (pkcs7?)
+        for (let x = 0; x < 3; x++) {
+            dx = md5
+                .update(Buffer.concat([
+                Buffer.from(dx),
+                Buffer.from(key),
+                Buffer.from(salt),
+            ]))
+                .digest();
+            salted += dx.toString("hex");
+            md5 = (0, crypto_1.createHash)("md5");
+        }
+        let aes = (0, crypto_1.createCipheriv)("aes-256-cbc", Buffer.from(salted, "hex").slice(0, 32), Buffer.from(salted, "hex").slice(32, 32 + 16));
+        aes.setAutoPadding(false);
+        return JSON.stringify({
+            ct: aes.update(data, null, "base64") + aes.final("base64"),
+            iv: salted.substring(64, 64 + 32),
+            s: Buffer.from(salt).toString("hex"),
+        });
+    }
+    var data = encrypt(baseString,key)
+    return Buffer.from(data).toString('base64')
+}
 
 app.post('/makeChaptchaCorsRequest', async function(req,res) {
     var before = req.body.before
     if (before == undefined) {
         res.send(200).send('no')
     }
+    console.log(before)
+    console.log('d')
     var token = undefined
-    var browser_data = bda.default.getBda('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36')
+
+    var browser_data = bda.default.getBda('Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36','https://www.roblox.com/login','https://client-api.arkoselabs.com/v2/476068BF-9607-4799-B53D-966BE98E2B81/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html')
 
     while (true) {
         var body4 = undefined
@@ -1496,9 +1791,12 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
         }, {
             bda: browser_data,
             'data[blob]': before,
+            'capi_version': '10.0.3',
+            'capi_mode': 'inline',
+            'style_theme': 'default',
             public_key: '476068BF-9607-4799-B53D-966BE98E2B81',
             site: 'https://www.roblox.com',
-            userbrowser: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36',
+            userbrowser: 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
             rnd: Math.random(),
             language: "en"
         })
@@ -1513,14 +1811,16 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
             break
         }
     }
+
     var session = new fun.Session(token)
     sessionYE[token.token.split('|')[0]] = token
     var challenge = await session.getChallenge()
     sessionYEChallenge[token.token.split('|')[0]] = challenge
-
+    
     var messageYE = challenge.data.string_table['3.instructions-' + challenge.data.game_data.game_variant]
     res.status(200).send({token: token, show: messageYE, amount: challenge.data.game_data.waves})
 })
+
 
 /*
 MakeRobloxRequest('https://roblox-api.arkoselabs.com/fc/gfct/','POST',new URLSearchParams({
@@ -1567,6 +1867,8 @@ function encrypt(text,key) {
     return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
 }
 
+/*
+
 function decrypt(text,key) {
     if (key.length < 32) {
         while (true) {
@@ -1595,6 +1897,7 @@ function decrypt(text,key) {
     return decrypted.toString();
 }
 
+*/
 function replaceAt(str, index, replacement) {
     return str.substring(0, index) + replacement + str.substring(index + replacement.length);
 }

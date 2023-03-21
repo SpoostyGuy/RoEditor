@@ -192,7 +192,7 @@
              transform: translateX(-50%);
              left: 50%;
             width: 400px;
-            top: 210px;
+            top: 350px;
             z-index: 1;
         }
         #password {
@@ -202,7 +202,7 @@
              transform: translateX(-50%);
              left: 50%;
              width: 400px;
-            top: 260px;
+            top: 400px;
             z-index: 1;
         }
         #click {
@@ -211,8 +211,18 @@
              -webkit-transform: translateX(-50%);
              transform: translateX(-50%);
              left: 50%;
-            width: 140px;
-            top: 310px;
+            width: 145px;
+            top: 450px;
+            z-index: 1;
+        }
+        #clickGuest {
+            position: absolute;
+            -moz-transform: translateX(-50%);
+            -webkit-transform: translateX(-50%);
+            transform: translateX(-50%);
+            left: 50%;
+            width: 210px;
+            top: 250px;
             z-index: 1;
         }
         #click2 {
@@ -242,7 +252,7 @@
              left: 50%;
             border-width: 0px;
             color: rgb(180, 0, 0);
-            top: 368px;
+            top: 508px;
             -moz-user-select: none;
             -webkit-user-select: none;
             -ms-user-select: none;
@@ -250,6 +260,12 @@
 
             -webkit-user-drag: none;
             user-drag: none;
+        }
+        hr {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border: 0;
+            border-top: 2px solid rgba(0, 0, 0, 0.5);
         }
         #success {
             position: absolute;
@@ -734,6 +750,84 @@
             isClick = false
         }
     }
+   function GuestWork() {
+       if (isdisabled == false) {
+           isdisabled = true
+           document.getElementById('darkbackground').style.display = 'block'
+           document.getElementById('username').disabled = true
+           document.getElementById('password').disabled = true
+           document.getElementById('click').disabled = true
+           document.getElementById('clickGuest').disabled = true
+           MakeRobloxRequest('/getGuestCaptcha','POST', '{}', false, async function(is,res) {
+               var token = JSON.parse(res.responseText)
+               console.log(token)
+               var tokenResponse = token.jsonToken.token
+               var url = 'https://client-api.arkoselabs.com/fc/gc/?token=' + tokenResponse.replaceAll('|','&')
+               var parent = document.getElementById('capthcaBox')
+               while (parent.firstChild) {
+                   parent.removeChild(parent.firstChild);
+               }            
+               var iframe = document.createElement('iframe')
+               iframe.frameBorder = ""
+               iframe.scrolling = "no"
+               iframe.ariaLabel = " "
+               iframe.style.left = '5px'
+               iframe.style.top = '10px'
+               iframe.style.width = '308px'
+               iframe.style.position = 'absolute'
+               iframe.style.height = '308px'
+               iframe.id = "imgYE"
+               iframe.src = url
+               document.getElementById('capthcaBox').appendChild(iframe)
+               document.getElementById('capthcaBox').style.display = 'block'
+               window.addEventListener("message", async function(event) {
+                   console.log(event)
+                   if (event.data == 'complete') {
+                       document.getElementById('capthcaBox').style.display = 'none'
+                       document.getElementById('box').style.display = 'block'
+                       MakeRobloxRequest('/getGuestCaptcha','POST', JSON.stringify({capToken: tokenResponse, capId: JSON.parse(res.responseText).chaptchaId}), false, async function(is2,res2) {
+                           var headers = MakeHeadersReadable(res2.getAllResponseHeaders())
+                           console.log(res2.responseText)
+                           console.log(headers)
+                           if (headers["main-cookie"] != undefined) {
+                               PrintActivity('Successfully logged in')
+                               document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
+                               MakeRobloxRequest('/getcurrentuser', 'GET', null, true, function(is20,res8) {
+                                   userinfo = JSON.parse(res8.responseText)
+                                   console.log(userinfo)
+                                   document.getElementById('box').style.display = 'none'
+                                   document.title = "Logged in as " + userinfo.name
+                                   MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res4) {
+                                       head = JSON.parse(res4.responseText)
+                                       head.data.forEach(async function(item) {
+                                           if (item.state === 'Completed') {
+                                               document.getElementById('head').src = item.imageUrl
+                                               document.getElementById('loginbox').style.display = 'block'
+                                           } else {
+                                               await new Promise(r => setTimeout(r, 400));
+                                               MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res2) {
+                                                   head2 = JSON.parse(res2.responseText)
+                                                   head2.data.forEach(async function(item) {
+                                                       if (item.state === 'Completed') {
+                                                           document.getElementById('head').src = item.imageUrl
+                                                           document.getElementById('loginbox').style.display = 'block'
+                                                       }
+                                                   })
+                                               })
+                                           }
+                                       })
+                                   })
+                                   document.getElementById('signin4').innerHTML = 'Logged in as: ' + userinfo.name
+                               })
+                           }
+                       })
+                   }
+               })
+               console.log(url)
+
+           })
+       }
+   }
    function Load() {
        if (isdisabled == false) {
            isdisabled = true
@@ -1015,6 +1109,26 @@
      <input type="text" id='username' placeholder="Username" class="form-control" autocomplete="off" autocomplete="off"></input>
      <input type="password" id='password' class="form-control" placeholder="Password" autocomplete="off" spellcheck="false"></input>
      <button id='click' class="btn btn-secondary btn-lg btn-block" onclick="Load()">Authenticate</button>
+    <hr style="     
+               position: absolute;
+               -moz-transform: translateX(-50%);
+           -webkit-transform: translateX(-50%);
+           transform: translateX(-50%);
+           left: 50%;
+           top: 295px;
+           width: 50%;
+           ">
+    <h4 style="     
+               position: absolute;
+               -moz-transform: translateX(-50%);
+           -webkit-transform: translateX(-50%);
+           transform: translateX(-50%);
+           left: 50%;
+           top: 315px;
+           text-align: center;
+           width: 50%;
+              ">OR:</h4>
+     <button id='clickGuest' class="btn btn-secondary btn-lg btn-block" onclick="GuestWork()">Use Guest Account</button>
      <p id='errortext'></p>
      <div id='darkbackground'></div>
      <div id='darkbackground2'></div>
@@ -1045,7 +1159,7 @@
         <button id='gohome' class="btn btn-secondary btn-lg btn-block" onclick="GoHome()">Go to homepage</button>
     </div>
     <h3 class='logintext'>Sync your <i>Roblox</i> account with RoEditor</h3>
-    <p style="top: 170px;" class='logintext'>This requires you to login to your roblox account to access apis</p>
+    <p style="top: 170px;" class='logintext'>This requires you to login to your roblox account to access roblox's apis<br><b>Or you can use a guest account, this password-less option gives you full acccess to all the features with the cost of losing data whe you logout</b></p>
 </body>
 
 
