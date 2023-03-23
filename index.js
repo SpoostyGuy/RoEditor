@@ -159,6 +159,7 @@ async function makeSignupReq(capToken,capId,userAgent) {
         headers: {
             'content-type': 'application/json',
             'content-length': bodyReq.length
+            'user-agent': userAgent,
         },
         body: bodyReq
     }, async function(err,res,body) {
