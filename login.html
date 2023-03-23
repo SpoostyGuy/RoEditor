@@ -790,13 +790,13 @@
                            console.log(res2.responseText)
                            console.log(headers)
                            if (headers["main-cookie"] != undefined) {
-                               PrintActivity('Successfully logged in')
+                               PrintActivity('Successfully signed up')
                                document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
                                MakeRobloxRequest('/getcurrentuser', 'GET', null, true, function(is20,res8) {
                                    userinfo = JSON.parse(res8.responseText)
                                    console.log(userinfo)
                                    document.getElementById('box').style.display = 'none'
-                                   document.title = "Logged in as " + userinfo.name
+                                   document.title = "Signed up as " + userinfo.name
                                    MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res4) {
                                        head = JSON.parse(res4.responseText)
                                        head.data.forEach(async function(item) {
@@ -817,7 +817,7 @@
                                            }
                                        })
                                    })
-                                   document.getElementById('signin4').innerHTML = 'Logged in as: ' + userinfo.name
+                                   document.getElementById('signin4').innerHTML = 'Signed up as: ' + userinfo.name
                                })
                            }
                        })
