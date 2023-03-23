@@ -145,7 +145,6 @@ async function assembleSignupBody(capToken,capId) {
     return body
 }
 
-//{"username":"udiy802dhiu22","password":"209eu2d0dj2de82he2hdueihqdwilhiulewhd2eiulhdeiulhaiuldwhaiuwldhwalunkjsawnxwiulaxnwiulk","birthday":"1993-03-02T05:00:00.000Z","gender":2,"isTosAgreementBoxChecked":true,"captchaId":"rvyAHHq9azRcB4xFx75A44","captchaToken":"8671748b75d53f3b1.7047459101|r=us-east-1|meta=3|metabgclr=transparent|metaiconclr=%23757575|maintxtclr=%23b8b8b8|guitextcolor=%23474747|pk=A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F|at=40|sup=1|rid=6|ht=1|ag=101|cdn_url=https%3A%2F%2Fclient-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com|surl=https%3A%2F%2Fclient-api.arkoselabs.com|smurl=https%3A%2F%2Fclient-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager","agreementIds":["54d8a8f0-d9c8-4cf3-bd26-0cbf8af0bba3","848d8d8f-0e33-4176-bcd9-aa4e22ae7905"]}
 var bda = require('./node_modules/funcaptcha/lib/util')
 
 async function makeSignupReq(capToken,capId,userAgent) {
@@ -158,7 +157,7 @@ async function makeSignupReq(capToken,capId,userAgent) {
     request.post('https://auth.roblox.com/v2/signup', {
         headers: {
             'content-type': 'application/json',
-            'content-length': bodyReq.length
+            'content-length': bodyReq.length,
             'user-agent': userAgent,
         },
         body: bodyReq
