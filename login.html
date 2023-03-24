@@ -468,6 +468,235 @@
     var totalAmount = undefined
     var response2 = ''
     var next = 1
+    async function loadImage(url, elem) {
+        return new Promise((resolve, reject) => {
+            try {
+                elem.onload = () => resolve(elem);
+                elem.onerror = reject;
+                elem.src = url;
+            } catch {
+                resolve(elem)
+            }
+        });
+    }
+    async function ShowChaptchaPromptGuest() {
+        var idYE = undefined
+        var dis = document.getElementById('redX')
+        if (dis != null) {
+            dis = dis.style.display
+        }
+        var parent = document.getElementById('capthcaBox')
+        while (parent.firstChild) {
+            parent.removeChild(parent.firstChild);
+        }
+        next = 1
+        response = ''
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button class="capButton" m="4" onclick='Click(4)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 102px;
+            top: 194px;
+            background: none;
+            display: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button class="capButton" m="1" onclick='Click(1)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            display: none;
+            height: 110px;
+            left: 102px;
+            top: 84px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button class="capButton" m="0" onclick='Click(0)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 0px;
+            display: none;
+            top: 84px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button class="capButton" m="3" onclick='Click(3)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 0px;
+            top: 194px;
+            display: none;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button class="capButton" m="5" onclick='Click(5)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            height: 110px;
+            left: 205px;
+            top: 194px;
+            background: none;
+            display: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<button class="capButton" m="2" onclick='Click(2)' style="
+            position: absolute;
+            z-index: 400;
+            width: 100px;
+            display: none;
+            height: 110px;
+            left: 205px;
+            top: 84px;
+            background: none;
+            border: none;
+            outline: none;
+            border: 2px black dotted;
+        "></button>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<div style="
+            position: absolute;
+            z-index: -2;
+            width: 100%;
+            height: 100%;
+            background-color: rgb(0,0,0);
+            transition: all 0.5s linear;
+            opacity: 0;
+            outline: none;
+        " id="back"></div>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<h3 style="
+            position: absolute;
+            z-index: -1;
+            transform: translateX(-50%) translateY(-50%);
+            top: 50%;
+            left: 50%;
+            text-align: center;
+            color: white;
+            transition: all 0.5s linear;
+            width: 200px;
+            height: 40px;
+            opacity: 0;
+        " id="h3YE"></h3>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<div style="
+            position: absolute;
+            z-index: -1;
+            transform: translateX(-50%) translateY(-50%);
+            top: calc(50% + 28px);
+            background-color: grey;
+            left: 50%;
+            transition: all 0.5s linear;
+            width: 200px;
+            height: 4px;
+            opacity: 0;
+        " id="barback"></div>`
+        document.getElementById('barback').innerHTML = document.getElementById('barback').innerHTML + `<div style="
+            position: absolute;
+            z-index: 803;
+            background-color: lightgreen;
+            transition: all 0.5s linear;
+            width: 0px;
+            height: 4px;
+            opacity: 1;
+        " id="barYE"></div>`
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + ` <p style="
+     position: absolute;
+     border-width: 0px;
+     top: 25px;
+     -moz-user-select: none;
+     -webkit-user-select: none;
+     -ms-user-select: none;
+     user-select: none;
+     -webkit-user-drag: none;
+     user-drag: none;
+     font-size: 25px;
+     text-align: center;
+     width: 100%;
+     " id="explainText">Loading...</p>`
+
+        document.getElementById('capthcaBox').innerHTML = document.getElementById('capthcaBox').innerHTML + `<span id="redX" style="z-index: 1000; color: red; display: none; width:100px; height:100px; font-size:100px; transform: translateX(-50%) translateY(-50%); position: absolute; top: 50%; left: 50%;" class="material-symbols-outlined">
+        highlight_off
+        </span>`
+        document.getElementById('redX').style.display = dis
+        if (dis == 'block') {
+            document.getElementById('back').style.zIndex = '800'
+            document.getElementById('back').style.opacity = '0.5'
+            document.getElementById('redX').style.transition = 'all 0.5s linear'
+            document.getElementById('redX').style.opacity = '1'
+            await new Promise(r => setTimeout(r, 400));
+            document.getElementById('back').style.opacity = '0'
+            document.getElementById('redX').style.opacity = '0'
+        }
+        var fullToken = undefined
+        MakeRobloxRequest('/getGuestCaptcha','POST',JSON.stringify({}),true,async function(is,res) {
+            var dataToken = JSON.parse(res.responseText)
+            console.log(dataToken['chaptchaId'])
+            idYE = dataToken['chaptchaId']
+            var token = dataToken['token'].token.split('|')[0]
+            var iframe = document.createElement('img')
+            iframe.frameBorder = ""
+            iframe.scrolling = "no"
+            iframe.ariaLabel = " "
+            iframe.style.top = '84px'
+            iframe.style.width = '308px'
+            iframe.style.position = 'absolute'
+            iframe.style.height = '220px'
+            iframe.id = "imgYE"
+            iframe.onerror = function() {
+                response2 = 'WRONG'
+                response = 'amongus'
+            }
+            try {
+                await loadImage('/img.png?token=' + token,iframe)
+            } catch {
+                response2 = 'WRONG'
+                response = 'amongus'
+                console.log('break')
+            }
+            console.log(dataToken.show)
+            fullToken = dataToken['token'].token
+            document.getElementById('explainText').innerHTML = dataToken.show
+            currentToken = token
+            totalAmount = dataToken.amount
+            var url = token + '&r=us-east-1&metabgclr=transparent&guitextcolor=%23474747&maintxtclr=%23b8b8b8&metaiconclr=%23757575&meta=3&lang=en&pk=476068BF-9607-4799-B53D-966BE98E2B81&at=40&rid=14&ag=101&cdn_url=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc&lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com&surl=https%3A%2F%2Froblox-api.arkoselabs.com&smurl=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager'
+            console.log('/img.gif?token=' + token)
+            document.getElementById('redX').style.display = 'none'
+            document.getElementById('capthcaBox').appendChild(iframe)
+            document.getElementById('capthcaBox').style.display = 'block'
+            document.getElementsByClassName('capButton')[0].style.display = 'block'
+            document.getElementsByClassName('capButton')[1].style.display = 'block'
+            document.getElementsByClassName('capButton')[2].style.display = 'block'
+            document.getElementsByClassName('capButton')[3].style.display = 'block'
+            document.getElementsByClassName('capButton')[4].style.display = 'block'
+            document.getElementsByClassName('capButton')[5].style.display = 'block'
+        })
+        while (true) {
+            if (response != '') {
+                break
+            }
+            await new Promise(r => setTimeout(r, 100));
+        }
+        if (response != 'yeet') {
+            response2 = fullToken + '_!|=|!_' + idYE
+        } else {
+            response2 = 'WRONG'
+        }
+    }
+
     async function ShowChaptchaPrompt(bda,idYE) {
         var dis = document.getElementById('redX')
         if (dis != null) {
@@ -632,13 +861,7 @@
         var fullToken = undefined
         MakeRobloxRequest('/makeChaptchaCorsRequest','POST',JSON.stringify({'before':bda}),true,async function(is,res) {
             var dataToken = JSON.parse(res.responseText)
-            console.log(dataToken.show)
-            fullToken = dataToken['token'].token
-            document.getElementById('explainText').innerHTML = dataToken.show
             var token = dataToken['token'].token.split('|')[0]
-            currentToken = token
-            totalAmount = dataToken.amount
-            var url = token + '&r=us-east-1&metabgclr=transparent&guitextcolor=%23474747&maintxtclr=%23b8b8b8&metaiconclr=%23757575&meta=3&lang=en&pk=476068BF-9607-4799-B53D-966BE98E2B81&at=40&rid=14&ag=101&cdn_url=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc&lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com&surl=https%3A%2F%2Froblox-api.arkoselabs.com&smurl=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager'
             var iframe = document.createElement('img')
             iframe.frameBorder = ""
             iframe.scrolling = "no"
@@ -648,7 +871,22 @@
             iframe.style.position = 'absolute'
             iframe.style.height = '220px'
             iframe.id = "imgYE"
-            iframe.src = '/img.png?token=' + token
+            iframe.onerror = function() {
+                response = 'amongus'
+            }
+            try {
+                await loadImage('/img.png?token=' + token,iframe)
+            } catch {
+                response2 = 'WRONG'
+                response = 'amongus'
+                console.log('break')
+            }            
+            console.log(dataToken.show)
+            fullToken = dataToken['token'].token
+            document.getElementById('explainText').innerHTML = dataToken.show
+            currentToken = token
+            totalAmount = dataToken.amount
+            var url = token + '&r=us-east-1&metabgclr=transparent&guitextcolor=%23474747&maintxtclr=%23b8b8b8&metaiconclr=%23757575&meta=3&lang=en&pk=476068BF-9607-4799-B53D-966BE98E2B81&at=40&rid=14&ag=101&cdn_url=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc&lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com&surl=https%3A%2F%2Froblox-api.arkoselabs.com&smurl=https%3A%2F%2Froblox-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager'
             console.log('/img.gif?token=' + token)
             document.getElementById('redX').style.display = 'none'
             document.getElementById('capthcaBox').appendChild(iframe)
@@ -750,84 +988,72 @@
             isClick = false
         }
     }
-   function GuestWork() {
-       if (isdisabled == false) {
-           isdisabled = true
-           document.getElementById('darkbackground').style.display = 'block'
-           document.getElementById('username').disabled = true
-           document.getElementById('password').disabled = true
-           document.getElementById('click').disabled = true
-           document.getElementById('clickGuest').disabled = true
-           MakeRobloxRequest('/getGuestCaptcha','POST', '{}', false, async function(is,res) {
-               var token = JSON.parse(res.responseText)
-               console.log(token)
-               var tokenResponse = token.jsonToken.token
-               var url = 'https://client-api.arkoselabs.com/fc/gc/?token=' + tokenResponse.replaceAll('|','&')
-               var parent = document.getElementById('capthcaBox')
-               while (parent.firstChild) {
-                   parent.removeChild(parent.firstChild);
-               }            
-               var iframe = document.createElement('iframe')
-               iframe.frameBorder = ""
-               iframe.scrolling = "no"
-               iframe.ariaLabel = " "
-               iframe.style.left = '5px'
-               iframe.style.top = '10px'
-               iframe.style.width = '308px'
-               iframe.style.position = 'absolute'
-               iframe.style.height = '308px'
-               iframe.id = "imgYE"
-               iframe.src = url
-               document.getElementById('capthcaBox').appendChild(iframe)
-               document.getElementById('capthcaBox').style.display = 'block'
-               window.addEventListener("message", async function(event) {
-                   console.log(event)
-                   if (event.data == 'complete') {
-                       document.getElementById('capthcaBox').style.display = 'none'
-                       document.getElementById('box').style.display = 'block'
-                       MakeRobloxRequest('/getGuestCaptcha','POST', JSON.stringify({capToken: tokenResponse, capId: JSON.parse(res.responseText).chaptchaId}), false, async function(is2,res2) {
-                           var headers = MakeHeadersReadable(res2.getAllResponseHeaders())
-                           console.log(res2.responseText)
-                           console.log(headers)
-                           if (headers["main-cookie"] != undefined) {
-                               PrintActivity('Successfully signed up')
-                               document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
-                               MakeRobloxRequest('/getcurrentuser', 'GET', null, true, function(is20,res8) {
-                                   userinfo = JSON.parse(res8.responseText)
-                                   console.log(userinfo)
-                                   document.getElementById('box').style.display = 'none'
-                                   document.title = "Signed up as " + userinfo.name
-                                   MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res4) {
-                                       head = JSON.parse(res4.responseText)
-                                       head.data.forEach(async function(item) {
-                                           if (item.state === 'Completed') {
-                                               document.getElementById('head').src = item.imageUrl
-                                               document.getElementById('loginbox').style.display = 'block'
-                                           } else {
-                                               await new Promise(r => setTimeout(r, 400));
-                                               MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res2) {
-                                                   head2 = JSON.parse(res2.responseText)
-                                                   head2.data.forEach(async function(item) {
-                                                       if (item.state === 'Completed') {
-                                                           document.getElementById('head').src = item.imageUrl
-                                                           document.getElementById('loginbox').style.display = 'block'
-                                                       }
-                                                   })
-                                               })
-                                           }
-                                       })
-                                   })
-                                   document.getElementById('signin4').innerHTML = 'Signed up as: ' + userinfo.name
-                               })
-                           }
-                       })
-                   }
-               })
-               console.log(url)
-
-           })
-       }
-   }
+        async function GuestWork() {
+            if (isdisabled == false) {
+                isdisabled = true
+                document.getElementById('darkbackground').style.display = 'block'
+                document.getElementById('username').disabled = true
+                document.getElementById('password').disabled = true
+                document.getElementById('click').disabled = true
+                document.getElementById('clickGuest').disabled = true
+                ShowChaptchaPromptGuest()
+                while (true) {
+                    if (response2 != '') {
+                        break
+                    }
+                    await new Promise(r => setTimeout(r, 10));
+                }
+                if (response2 == 'WRONG') {
+                    PrintActivity('User got captcha wrong, reloading function to reset the captcha')
+                    response2 = ''
+                    response = ''
+                    isdisabled = false
+                    GuestWork()
+                } else {
+                    PrintActivity('User got captcha correct, can continue')
+                    console.log(response2)
+                    var chaptchaToken = response2.split('_!|=|!_')[0]
+                    var captchaId = response2.split('_!|=|!_')[1]
+                    document.getElementById('box').style.display = 'block'
+                    MakeRobloxRequest('/getGuestCaptcha','POST', JSON.stringify({capToken: chaptchaToken, capId: captchaId}), false, async function(is2,res2) {
+                        var headers = MakeHeadersReadable(res2.getAllResponseHeaders())
+                        console.log(res2.responseText)
+                        console.log(headers)
+                        if (headers["main-cookie"] != undefined) {
+                            PrintActivity('Successfully signed up')
+                            document.cookie = 'ROBLOSECURITY=' + headers["main-cookie"]
+                            MakeRobloxRequest('/getcurrentuser', 'GET', null, true, function(is20,res8) {
+                                userinfo = JSON.parse(res8.responseText)
+                                console.log(userinfo)
+                                document.getElementById('box').style.display = 'none'
+                                document.title = "Signed up as " + userinfo.name
+                                MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res4) {
+                                    head = JSON.parse(res4.responseText)
+                                    head.data.forEach(async function(item) {
+                                        if (item.state === 'Completed') {
+                                            document.getElementById('head').src = item.imageUrl
+                                            document.getElementById('loginbox').style.display = 'block'
+                                        } else {
+                                            await new Promise(r => setTimeout(r, 400));
+                                            MakeRobloxRequest('/loadhead', 'POST', JSON.stringify({id: userinfo.id}), false, async function(is,res2) {
+                                                head2 = JSON.parse(res2.responseText)
+                                                head2.data.forEach(async function(item) {
+                                                    if (item.state === 'Completed') {
+                                                        document.getElementById('head').src = item.imageUrl
+                                                        document.getElementById('loginbox').style.display = 'block'
+                                                    }
+                                                })
+                                            })
+                                        }
+                                    })
+                                })
+                                document.getElementById('signin4').innerHTML = 'Signed up as: ' + userinfo.name
+                            })
+                        }
+                    })
+                }
+            }
+        }
    function Load() {
        if (isdisabled == false) {
            isdisabled = true

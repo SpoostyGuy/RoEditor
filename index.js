@@ -145,9 +145,10 @@ async function assembleSignupBody(capToken,capId) {
     return body
 }
 
+//{"username":"udiy802dhiu22","password":"209eu2d0dj2de82he2hdueihqdwilhiulewhd2eiulhdeiulhaiuldwhaiuwldhwalunkjsawnxwiulaxnwiulk","birthday":"1993-03-02T05:00:00.000Z","gender":2,"isTosAgreementBoxChecked":true,"captchaId":"rvyAHHq9azRcB4xFx75A44","captchaToken":"8671748b75d53f3b1.7047459101|r=us-east-1|meta=3|metabgclr=transparent|metaiconclr=%23757575|maintxtclr=%23b8b8b8|guitextcolor=%23474747|pk=A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F|at=40|sup=1|rid=6|ht=1|ag=101|cdn_url=https%3A%2F%2Fclient-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-us-east-1.arkoselabs.com|surl=https%3A%2F%2Fclient-api.arkoselabs.com|smurl=https%3A%2F%2Fclient-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager","agreementIds":["54d8a8f0-d9c8-4cf3-bd26-0cbf8af0bba3","848d8d8f-0e33-4176-bcd9-aa4e22ae7905"]}
 var bda = require('./node_modules/funcaptcha/lib/util')
 
-async function makeSignupReq(capToken,capId,userAgent) {
+async function makeSignupReq(capToken,capId) {
     var bodyReq = await assembleSignupBody(capToken,capId)
     bodyReq = JSON.stringify(bodyReq)
     var validity = undefined
@@ -158,7 +159,7 @@ async function makeSignupReq(capToken,capId,userAgent) {
         headers: {
             'content-type': 'application/json',
             'content-length': bodyReq.length,
-            'user-agent': userAgent,
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36',
         },
         body: bodyReq
     }, async function(err,res,body) {
@@ -168,7 +169,7 @@ async function makeSignupReq(capToken,capId,userAgent) {
                 'content-type': 'application/json',
                 'content-length': bodyReq.length,
                 'x-csrf-token': token,
-                'user-agent': userAgent,
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36',
                 "origin": "http://www.roblox.com",
                 "referer": "http://www.roblox.com/"
             },
@@ -182,7 +183,7 @@ async function makeSignupReq(capToken,capId,userAgent) {
                     var before = chaptchaBda
 
                     var token = undefined
-                    var browser_data = bda.default.getBda(userAgent,'https://www.roblox.com/','https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html')
+                    var browser_data = bda.default.getBda('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36', 'A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F', 'https://www.roblox.com/','https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html')
 
                     while (true) {
                         var body4 = undefined
@@ -203,9 +204,9 @@ async function makeSignupReq(capToken,capId,userAgent) {
                             'style_theme': 'default',
                             public_key: 'A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F',
                             site: 'https://www.roblox.com',
-                            userbrowser: userAgent,
+                            userbrowser: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36',
                             rnd: Math.random()
-                        },userAgent)
+                        },'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36', 'A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F')
                         while (true) {
                             if (body4 != undefined) {
                                 break
@@ -261,7 +262,18 @@ app.post('/getGuestCaptcha', async function(req,res) {
         }
         return res.status(200).send(dataReturn.loginBody)
     } else {
-        return res.status(200).json(dataReturn)
+        var token = dataReturn.jsonToken
+
+        var session = new fun.Session(token, {
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
+        })
+
+        sessionYE[token.token.split('|')[0]] = token
+        var challenge = await session.getChallenge()
+        sessionYEChallenge[token.token.split('|')[0]] = challenge
+
+        var messageYE = challenge.data.string_table['3.instructions-' + challenge.data.game_data.game_variant]
+        return res.status(200).send({token: token, show: messageYE, amount: challenge.data.game_data.waves, chaptchaId: dataReturn.chaptchaId})
     }
 })
 
@@ -1673,7 +1685,11 @@ app.get('/img.png',async function(req,res) {
     if (req.query.token != undefined) {
         if (sessionYE[req.query.token] != undefined) {
             var challenge = sessionYEChallenge[req.query.token]
-            res.status(200).send(await challenge.getImage())
+            var response = await challenge.getImage()
+            if ((response.toString()).length > 21000) {
+            } else {
+            }
+            res.status(200).send(response)
         } else {
             res.status(403).send('no')
         }
@@ -1704,7 +1720,7 @@ app.get('/an',async function(req,res) {
     }
 })
 
-function MakeChaptchaRequest(url,method,callback,body,userAgent) {
+function MakeChaptchaRequest(url,method,callback,body,userAgent,key) {
     var form = new URLSearchParams(Object.entries(body)).toString()
     if (userAgent == undefined) {
         request({
@@ -1716,13 +1732,14 @@ function MakeChaptchaRequest(url,method,callback,body,userAgent) {
                 'dnt': 1,
                 'origin': 'https://client-api.arkoselabs.com',
                 'pragma': 'no-cache',
-                'referer': 'https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html ',           'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+                'referer': 'https://client-api.arkoselabs.com/v2/' + key + '/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html ',           
+                'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Chrome OS"',
                 'sec-fetch-dest': 'empty',
                 'sec-fetch-mode': 'cors',
                 'sec-fetch-site': 'cross-site',
-                'user-agent': 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.',
             },
             url: url,
             method: method,
@@ -1738,7 +1755,8 @@ function MakeChaptchaRequest(url,method,callback,body,userAgent) {
                 'dnt': 1,
                 'origin': 'https://client-api.arkoselabs.com',
                 'pragma': 'no-cache',
-                'referer': 'https://client-api.arkoselabs.com/v2/A2A14B1D-1AF3-C791-9BBC-EE33CC7A0A6F/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html ',           'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
+                'referer': 'https://client-api.arkoselabs.com/v2/' + key + '/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html ',           
+                'sec-ch-ua': '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Chrome OS"',
                 'sec-fetch-dest': 'empty',
@@ -1803,11 +1821,11 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
     console.log('d')
     var token = undefined
 
-    var browser_data = bda.default.getBda('Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36','https://www.roblox.com/login','https://client-api.arkoselabs.com/v2/476068BF-9607-4799-B53D-966BE98E2B81/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html')
+    var browser_data = bda.default.getBda("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36", '476068BF-9607-4799-B53D-966BE98E2B81', 'https://www.roblox.com/login', 'https://client-api.arkoselabs.com/v2/476068BF-9607-4799-B53D-966BE98E2B81/enforcement.6db7a8ff6a078e9f9497fd42f1022bb5.html')
 
     while (true) {
         var body4 = undefined
-        MakeChaptchaRequest('https://roblox-api.arkoselabs.com/fc/gt2/public_key/476068BF-9607-4799-B53D-966BE98E2B81', 'POST', async function(err,res2,body) {
+        MakeChaptchaRequest('https://client-api.arkoselabs.com/fc/gt2/public_key/476068BF-9607-4799-B53D-966BE98E2B81', 'POST', async function(err,res2,body) {
             try {
                 body = JSON.parse(body)
                 body4 = body
@@ -1823,10 +1841,10 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
             'style_theme': 'default',
             public_key: '476068BF-9607-4799-B53D-966BE98E2B81',
             site: 'https://www.roblox.com',
-            userbrowser: 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+            userbrowser: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
             rnd: Math.random(),
             language: "en"
-        })
+        },"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36", '476068BF-9607-4799-B53D-966BE98E2B81')
         while (true) {
             if (body4 != undefined) {
                 break
@@ -1838,8 +1856,11 @@ app.post('/makeChaptchaCorsRequest', async function(req,res) {
             break
         }
     }
-
-    var session = new fun.Session(token)
+    
+    var session = new fun.Session(token, {
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
+    })
+    
     sessionYE[token.token.split('|')[0]] = token
     var challenge = await session.getChallenge()
     sessionYEChallenge[token.token.split('|')[0]] = challenge
